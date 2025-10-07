@@ -1,0 +1,11 @@
+alias nvim-astro="NVIM_APPNAME=nvim-astro nvim"
+alias nvim-base="NVIM_APPNAME=nvim-base nvim"
+alias nvim-chad="NVIM_APPNAME=nvim-chad nvim"
+alias nvim-kickstart="NVIM_APPNAME=nvim-kickstart nvim"
+alias nvim-lazy="NVIM_APPNAME=nvim-lazy nvim"
+alias nvim-main="NVIM_APPNAME=nvim-main nvim"
+alias nvim-mini="NVIM_APPNAME=nvim-mini nvim"
+alias nvim-old="NVIM_APPNAME=nvim-old nvim"
+
+alias nvim="nvim-main"
+alias vv="nvim-main"

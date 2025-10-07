@@ -1,0 +1,7 @@
+{description, "OTP supervisor"}.
+{variables, [
+    {name, "", "Name of the supervisor"},
+    {app_dir, ".", "Application directory"}
+  ]}.
+{dir, "{{app_dir}}/src"}.
+{template, "supervisor.erl", "{{app_dir}}/src/{{name}}_sup.erl"}.

@@ -1,0 +1,7 @@
+{description, "erlang module"}.
+{variables, [
+    {name, "", "Name of the module"},
+    {app_dir, ".", "Application directory"}
+  ]}.
+{dir, "{{app_dir}}/src"}.
+{template, "module.erl", "{{app_dir}}/src/{{name}}.erl"}.

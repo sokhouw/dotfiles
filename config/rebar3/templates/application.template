@@ -1,0 +1,7 @@
+{description, "OTP application module"}.
+{variables, [
+    {name, "", "Name of the application"},
+    {app_dir, ".", "Application directory"}
+  ]}.
+{dir, "{{app_dir}}/src"}.
+{template, "application.erl", "{{app_dir}}/src/{{name}}_app.erl"}.

@@ -1,0 +1,4 @@
+{variables, [
+    {author_name, "Marcin Sokołowski"},
+    {current_year, "2025"}
+]}.

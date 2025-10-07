@@ -1,0 +1,7 @@
+{description, "OTP gen_server"}.
+{variables, [
+    {name, "", "Name of the module"},
+    {app_dir, ".", "Application directory"}
+  ]}.
+{dir, "{{app_dir}}/src"}.
+{template, "gen_server.erl", "{{app_dir}}/src/{{name}}.erl"}.

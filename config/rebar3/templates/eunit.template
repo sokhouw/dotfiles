@@ -1,0 +1,7 @@
+{description, "eunit tests module"}.
+{variables, [
+    {name, "", "Name of the tested module"},
+    {app_dir, ".", "Application directory"}
+  ]}.
+{dir, "{{app_dir}}/test"}.
+{template, "eunit.erl", "{{app_dir}}/test/{{name}}_tests.erl"}.

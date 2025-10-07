@@ -1,0 +1,7 @@
+{description, "OTP application src file"}.
+{variables, [
+    {name, "", "Name of the application"},
+    {app_dir, ".", "Application directory"}
+  ]}.
+{dir, "{{app_dir}}/src"}.
+{template, "app.src", "{{app_dir}}/src/{{name}}.app.src"}.
