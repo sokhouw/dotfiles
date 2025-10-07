@@ -6,28 +6,8 @@ BLUE="\033[1;34m"
 YELLOW="\033[1;33m"
 RESET="\033[0;m"
 
-DOTFILES_DIR=$(cd "$(dirname "$0")/.." && pwd)
-
-# TODO is that really the best location?
-UNINSTALL_FILE="${DOTFILES_DIR}/.uninstall"
-
-prep_variables() {
-    if [ "${1}" != "test" ]; then
-        HOME_DIR="${HOME}"
-    else
-        HOME_DIR="/tmp/dotfiles"
-    fi
-    XDG_CONFIG_DIR="${HOME_DIR}/.config"
-    BIN_DIR="${HOME_DIR}/bin"
-    DOTFILES_LINK="${HOME_DIR}/.dotfiles"
-}
-
 uninstall_instr() {
-    if [ ! -f "${UNINSTALL_FILE}" ]; then
-        printf "$*" > ${UNINSTALL_FILE}
-    else
-        printf "\n$*" >> ${UNINSTALL_FILE}
-    fi
+    printf "$*\n" >> ${UNINSTALL_FILE}
 }
 
 create_link() {
@@ -98,7 +78,7 @@ clone_repo() {
 
 modify_bashrc() {
     file="${HOME_DIR}/.bashrc"
-    content="\n\n# dotfiles addition\nsource ${DOTFILES_DIR}/bashrc/bashrc.sh\n"
+    content="\n\n# dotfiles addition\nsource ${DOTFILES_LINK}/bashrc/bashrc.sh\n"
     backup_file ${file}
     error=$(printf "${content}" 2>&1 >> ${file})
     if [ "$?" = "0" ]; then
@@ -109,22 +89,26 @@ modify_bashrc() {
     fi
 }
 
-install_link() {
-    # dotfiles link
-    create_link "${DOTFILES_DIR}" "${DOTFILES_LINK}"
+install_dotfiles() {
+    # bit of a checking & egg situation
+    # need to create that dir manually cause uninstall file is supposed to be in that dir
+    mkdir "${XDG_STATE_DIR}/dotfiles"
+    # ... thus manually adding instructions to ditch the dir and its contents
+    uninstall_instr "rm -rf ${XDG_STATE_DIR}/dotfiles"
+    dotfiles_dir="$(cd "$(dirname "$0")/.." && pwd)"
+    create_link "${dotfiles_dir}" "${DOTFILES_LINK}"
+}
+
+install_bashrc() {
+    modify_bashrc
 }
 
 install_bin() {
     # copy bin files
     create_dir "${BIN_DIR}"
-    for f in $(ls -1 "${DOTFILES_DIR}/bin"); do
+    for f in $(ls -1 "${DOTFILES_LINK}/bin"); do
         create_link "${DOTFILES_LINK}/bin/${f}" "${BIN_DIR}/${f}"
     done
-}
-
-install_config() {
-    # XDG config
-    create_dir "${XDG_CONFIG_DIR}"
 }
 
 install_config_neovim() {
@@ -148,40 +132,21 @@ install_config_tmux() {
 install_config_rebar3() {
     create_dir "${XDG_CONFIG_DIR}/rebar3"
     create_dir "${XDG_CONFIG_DIR}/rebar3/templates"
-    for f in $(ls -1 "${DOTFILES_DIR}/config/rebar3/templates"); do
-        create_link "${TARGET_CONFIG_LINK}/config/rebar3/templates/${f}" "${XDG_CONFIG_DIR}/rebar3/templates/${f}"
+    for f in $(ls -1 "${DOTFILES_LINK}/config/rebar3/templates"); do
+        create_link "${DOTFILES_LINK}/config/rebar3/templates/${f}" "${XDG_CONFIG_DIR}/rebar3/templates/${f}"
     done
 }
 
-install_bashrc() {
-    modify_bashrc
-}
-
-
 install() {
-    mode="${1}"
-
-    if [ -f "${UNINSTALL_FILE}" ]; then
-        printf "${RED}[dotfiles]${RESET} already installed (${UNINSTALL_FILE})\n"
-        exit 1
-    fi
-    if [ -e "${DOTFILES_LINK}" ]; then
-        printf "${RED}[dotfiles]${RESET} already installed (${DOTFILES_LINK})\n"
+    if [ -e "${XDG_STATE_DIR}/dotfiles" ]; then
+        printf "${RED}[dotfiles]${RESET} already installed\n"
         exit 1
     fi
 
-    prep_variables ${1}
-    if [ "${mode}" = "test" ]; then
-        if [ ! -d "${HOME_DIR}" ]; then
-            mkdir ${HOME_DIR}
-        fi
-        echo "# line 1\n# line 2\n" > ${HOME_DIR}/.bashrc
-    fi
+    trap on_exit_install EXIT
 
-    trap on_exit EXIT
-
-    printf "${BLUE}Installing link${RESET}\n"
-    install_link
+    printf "${BLUE}Installing dotfiles${RESET}\n"
+    install_dotfiles
     printf "${BLUE}Installing bashrc${RESET}\n"
     install_bashrc
     printf "${BLUE}Installing bin files${RESET}\n"
@@ -196,11 +161,26 @@ install() {
     install_config_rebar3
 }
 
+on_exit_install() {
+    result="$?"
+    if [ -f "${UNINSTALL_FILE}" ]; then
+        # reverse the order of uninstall instructions
+        sed -i '1!G;h;$!d' ${UNINSTALL_FILE} 
+        if [ "${result}" != 0 ]; then
+            run_uninstall_instr
+        fi
+    fi
+}
+
 uninstall() {
     if [ ! -f "${UNINSTALL_FILE}" ]; then
         printf "${RED}[dotfiles]${RESET} not installed\n"
         exit 1
     fi
+    run_uninstall_instr
+}
+
+run_uninstall_instr() {
     cat "${UNINSTALL_FILE}" | while IFS= read -r cmd; do
         printf "${GREEN}[uninstall]${RESET} ${cmd}\n"
         sh -c "${cmd}"
@@ -209,34 +189,51 @@ uninstall() {
             exit 1
         fi
     done
-    rm ${UNINSTALL_FILE}
 }
 
-on_exit() {
-    result="$?"
-    if [ -f "${UNINSTALL_FILE}" ]; then
-        # reverse the order of uninstall instructions
-        sed -i '1!G;h;$!d' ${UNINSTALL_FILE} 
-        if [ "${result}" != 0 ]; then
-            uninstall
-        fi
-    fi
+prepare_variables() {
+    HOME_DIR="${1}"
+    DOTFILES_LINK="${HOME_DIR}/.dotfiles"
+    BIN_DIR="${HOME_DIR}/bin"
+    XDG_CONFIG_DIR="${HOME_DIR}/.config"
+    XDG_STATE_DIR="${HOME_DIR}/.local/state"
+    UNINSTALL_FILE=${XDG_STATE_DIR}/dotfiles/uninstall
 }
 
 case "${1}" in
     install)
+        prepare_variables "${HOME}"
+        trap on_exit_install EXIT
+        install
         shift 1
-        install default
         ;;
     uninstall)
+        prepare_variables "${HOME}"
+        uninstall
         shift 1
-        uninstall default
         ;;
     testinstall)
+        prepare_variables "/tmp/dotfiles"
+        if [ ! -d "${HOME_DIR}" ]; then
+            echo "homedir [${HOME_DIR}]"
+            mkdir ${HOME_DIR}
+            mkdir -p ${HOME_DIR}/.config
+            mkdir -p ${HOME_DIR}/.local/state
+            echo 33333
+            echo "# line 1\n# line 2\n" > ${HOME_DIR}/.bashrc
+        fi
+        trap on_exit_install EXIT
+        install
         shift 1
-        install test
+        ;;
+
+    testuninstall)
+        prepare_variables "/tmp/dotfiles"
+        uninstall
+        shift 1
         ;;
     *)
-        printf "${RED}[arguments]${RESET} use dotfiles install|uninstall|testinstall\n"
+        printf "${RED}[arguments]${RESET} use dotfiles install|uninstall|testinstall|testuninstall\n"
         exit 1
+        ;;
 esac
