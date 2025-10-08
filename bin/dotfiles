@@ -176,11 +176,11 @@ uninstall() {
     run_uninstall_instr
 }
 
-check() {
+checkhealth() {
     if [ -d ${CONFIG_HOME}/dotfiles ]; then
-        printf "${GREEN}[check]${RESET} installed\n"
+        printf "${GREEN}[checkhealth]${RESET} installed\n"
     else
-        printf "${YELLOW}[check]${RESET} NOT installed\n"
+        printf "${YELLOW}[checkhealth]${RESET} NOT installed\n"
     fi
 }
 
@@ -274,12 +274,12 @@ case "${1}" in
         prepare $*
         uninstall
         ;;
-    check)
+    checkhealth)
         prepare $*
-        check
+        checkhealth
         ;;
     *)
-        printf "${RED}[arguments]${RESET} use dotfiles install|uninstall [--test]\n"
+        printf "${RED}[arguments]${RESET} use dotfiles install|uninstall|checkhealth [--test] [--verbose]\n"
         exit 1
         ;;
 esac
