@@ -1,0 +1,13 @@
+[user]
+    email = marcin.sokolowski@gmail.com
+    name = sokhouw
+[core]
+    eitor = nvim-main
+[diff]
+    tool = nvimdiff
+[difftool "nvimdiff"]
+    cmd = "APPNAME=nvim-main nvim -d \"$LOCAL\" \"$REMOTE\""
+[difftool]
+    prompt = false
+[mergetool]
+    prompt = false

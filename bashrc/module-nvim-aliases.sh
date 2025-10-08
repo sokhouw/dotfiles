@@ -1,3 +1,5 @@
+# shellcheck shell=sh
+
 alias nvim-astro="NVIM_APPNAME=nvim-astro nvim"
 alias nvim-base="NVIM_APPNAME=nvim-base nvim"
 alias nvim-chad="NVIM_APPNAME=nvim-chad nvim"
