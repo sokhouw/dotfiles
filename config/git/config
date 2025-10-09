@@ -3,6 +3,7 @@
     name = sokhouw
 [core]
     eitor = nvim-main
+    pager = cat
 [diff]
     tool = nvimdiff
 [difftool "nvimdiff"]
