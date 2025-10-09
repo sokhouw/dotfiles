@@ -1,8 +1,19 @@
+# ------------------------------------------------------------------------------
+#  user land
+# ------------------------------------------------------------------------------
+
 install:
 	@scripts/cmd-install.sh
 
 uninstall:
 	@scripts/cmd-uninstall.sh
+
+is-installed:
+	@scripts/cmd-is-installed.sh
+
+# ------------------------------------------------------------------------------
+#  developer land
+# ------------------------------------------------------------------------------
 
 version:
 	@git describe --tags --dirty --always 2>/dev/null || echo "unknown"
@@ -19,18 +30,25 @@ release:
 	fi
 	git tag -a v$(version) -m "version $(version)"
 
-test: test-shellcheck
+test: -test-prep $(addprefix test-,$(notdir $(wildcard test/*))) -test-report
 
-test-install: $(addprefix test-install-,$(notdir $(wildcard test/*)))
+-test-prep:
+	rm -f _build/test/report
+	touch _build/test/report
 
-test-install-%:
+-test-report:
+	@echo "Results: pass($$(grep PASS _build/test/report | wc -l)) fail($$(grep FAIL _build/test/report | wc -l))"
+	@cat _build/test/report
+	@rm _build/test/report
+
+test-%:
 	@scripts/cmd-install.sh $*
 	@scripts/cmd-install-verify.sh $*
 	@scripts/cmd-uninstall.sh $*
 	@scripts/cmd-uninstall-verify.sh $*
 
 
-test-shellcheck:
+shellcheck:
 	shellcheck scripts/*
 	shellcheck bin/*
 	shellcheck config/shell/bash/*

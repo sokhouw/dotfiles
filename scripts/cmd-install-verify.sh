@@ -13,7 +13,8 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 if ! verify_instr_run; then
     printf '%sFAILED%s\n' "${RED}" "${RESET}"
-    exit 1
+    printf '%s: %sFAILED%s\n' "${TEST}" "${RED}" "${RESET}" >> _build/test/report
 else
     printf '%sPASS%s\n' "${GREEN}" "${RESET}"
+    printf '%s: %sPASS%s\n' "${TEST}" "${GREEN}" "${RESET}" >> _build/test/report
 fi

@@ -24,7 +24,7 @@ install_dir() {
         if error=$(mkdir "${1}" 2>&1 >/dev/null); then
             printf 'directory %s: %screated%s\n' "${1}" "${GREEN}" "${RESET}"
             uninstall_instr rmdir "${1}"
-            verify_instr "[ -d "${1}" ]"
+            verify_instr "[ -d \"${1}\" ]"
         else
             printf 'directory %s: %s%s%s\n' "${1}" "${RED}" "${error}" "${RESET}"
             exit 1
@@ -35,7 +35,9 @@ install_dir() {
 install_config() {
     os_cmd cp -r "${1}" "${CONFIG_HOME}/$(basename "${1}")"
     uninstall_instr rm -rf "${CONFIG_HOME}/$(basename "${1}")"
-    verify_instr "diff -qr ${1} ${CONFIG_HOME}/$(basename ${1})"
+    config_dir="${CONFIG_HOME}/$(basename "${1}")"
+    #verify_instr "diff -qr ${1} ${CONFIG_HOME}/$(basename ${1})"
+    verify_instr "diff -qr ${1} ${config_dir}"
 }
 
 install_create_backup_mv() {

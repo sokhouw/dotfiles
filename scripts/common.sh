@@ -114,7 +114,7 @@ is_installed() {
 # ------------------------------------------------------------------------------
 
 case "${COMMAND}" in
-    install|uninstall|install-verify|uninstall-verify)
+    install|uninstall|is-installed|install-verify|uninstall-verify)
         if [ -z "${TEST}" ]; then
             printf '%s===> %s%s\n' "${BLUE}" "${COMMAND}" "${RESET}"
         elif [ ! -d "test/${TEST}" ]; then
@@ -158,3 +158,7 @@ fi
 VERSION_FILE="${CONFIG_HOME}/dotfiles/VERSION"
 UNINSTALL_FILE="${STATE_HOME}/dotfiles/uninstall"
 VERIFY_FILE="${STATE_HOME}/dotfiles/verify"
+
+export HOME_DIR CONFIG_HOME STATE_HOME
+export TEST_HOME_DIR
+export VERSION_FILE UNINSTALL_FILE VERIFY_FILE HOME
