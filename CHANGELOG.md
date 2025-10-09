@@ -1,6 +1,6 @@
 # ChangeLog
 
-## [1.0,0](https://github.com/sokhouw/dotfiles), 2025/10/09
+## [1.0,0](https://github.com/sokhouw/dotfiles) 2025/10/09
 
 ### Features
 

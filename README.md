@@ -1,73 +1,88 @@
-# dotfiles
+# Dotfiles
 
 Personal collection of configuration files and scripts to automate and standardise my development environment. This repo primarily covers Vim/Neovim, shell environment customisations, and utility scripts.
 
+---
+
 ## Table of Contents
 
-- [Features](#features)
-- [File Structure](#file-structure)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Customisation](#customisation)
-- [Contributing](#contributing)
-- [License](#license)
+1. [Features](#features)  
+2. [Dependencies](#dependencies)  
+3. [Installation](#installation)  
+4. [Uninstallation](#uninstallation)  
+5. [Getting Started](#getting-started)  
+6. [Licence](#licence)
+
+---
 
 ## Features
 
-- Modular Bash customisations (aliases, color schemes, path management, Neovim helpers)
-- Neovim and tmux configuration scaffolding
-- Utility scripts for environment setup and color previews
-- Easy install/uninstall via one command
+* git config
+* [neovim](https://github.com/neovim/neovim) config (0.11+ compatible)
+  * LSP
+    * [erlang](https://github.com/WhatsApp/erlang-language-platform)
+    * [lua](https://github.com/LuaLS/lua-language-server)
+  * [lazy.nvim](https://github.com/folke/lazy.nvim)
+  * plugins
+    * [bufferline.nvim](https://github.com/akinsho/bufferline.nvim)
+    * [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim)
+    * [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
+    * [nvim-notify](https://github.com/rcarriga/nvim-notify)
+    * [render-markdown.nvim](https://github.com/MeanderingProgrammer/render-markdown.nvim)
+    * [snacks.nvim](https://github.com/folke/snacks.nvim)
+    * [themery.nvim](https://github.com/zaldih/themery.nvim)
+    * [which-key.nvim](https://github.com/folke/which-key.nvim)
+  * [tmux](https://github.com/tmux/tmux) config
+    * [tpm](https://github.com/tmux-plugins/tpm)
+    * [tmux-tokyo-night](https://github.com/fabioluciano/tmux-tokyo-night)
+* [rebar3](https://github.com/erlang/rebar3) config with templates
+* shell modules
+  * [bash](https://www.gnu.org/software/bash)
+    * man colors
+    * neovim aliases
+    * ~/bin path
+    * XDG paths
 
-## File Structure
+## Dependencies
 
-```
-dotfiles/
-├── bashrc/
-│   ├── bashrc.sh
-│   ├── man-colors.sh
-│   ├── nvim-aliases.sh
-│   └── path.sh
-├── bin/
-│   ├── colors
-│   └── dotfiles
-├── config/
-│   ├── nvim-base/
-│   ├── nvim-main/
-│   ├── rebar3/
-│   └── tmux/
-```
+To enable full functionality (especially for Neovim LSP support), the following external tools are required:
 
-- **bashrc/**: Bash configuration modules (e.g., color setup, Neovim aliases, PATH management)
-- **bin/colors**: Script for color previews or terminal color configuration
-- **bin/dotfiles**: Main management script for installing, updating, or uninstalling dotfiles
-- **config/**: Subdirectories for various app configs (e.g. Neovim, tmux, rebar3)
+* [elp (Erlang Language Platform)](https://github.com/WhatsApp/erlang-language-platform)
+* [lua-language-server](https://github.com/LuaLS/lua-language-server)
+* [rebar3](https://github.com/erlang/rebar3)
+
+Additionally, **one of the Nerd Fonts** (e.g. *Hack Nerd Font*, *FiraCode Nerd Font*, *JetBrains Mono Nerd Font*, etc.) is required for proper rendering of icons, ligatures, and UI elements in the statusline, file explorer, etc.
+
+Ensure those are installed and available in your `PATH` (or your system’s font registry for the Nerd Font).
 
 ## Installation
 
-Clone the repository and run the install command:
-
-```sh
-git clone https://github.com/sokhouw/dotfiles.git
+```bash
+git clone https://github.com/sokhouw/dotfiles.git dotfiles
 cd dotfiles
-bin/dotfiles install
+make install
 ```
 
-**Note:** Review the scripts before running, and back up any existing configuration you wish to preserve.
+**Note:** Review the scripts before running. Dotfiles does the best to back up any files that it replaces or modifies but to be 100% sure back up any existing configuration you wish to preserve.
 
-## Usage
+Because the setup is XDG-compliant
 
-- **Install/Update:**  
-  Run `bin/dotfiles install` to set up or refresh symlinks and environment.
-- **Uninstall:**  
-  (If supported) Run `bin/dotfiles uninstall` to revert changes.
+    Configuration files live under ~/.config/…
 
-## Customization
+    State, cache, or runtime files live under ~/.local/state/…
 
-- Modify files under `bashrc/` to tailor your shell experience.
-- Add or change scripts in `bin/` for custom utilities.
-- Place or edit app-specific config in `config/` subdirectories.
-- Symlink only the components you want for a partial setup.
+    Additional data (if any) under ~/.local/share/…
+
+You may inspect the Makefile to see exactly where each file or directory goes.
+
+## Uninstallation
+
+```bash
+cd dotfiles
+make uninstall
+```
+
+Uninstallation script is to be found at ~/.local/state/dotfiles/uninstall
 
 ## Contributing
 
@@ -75,8 +90,4 @@ Improvements, suggestions, and PRs are welcome! Open an issue or submit a pull r
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
-
----
-
-**Enjoy your streamlined and portable developer setup!**
+This project is licensed under the MIT License. See the [License](LICENSE.md) file for details.
