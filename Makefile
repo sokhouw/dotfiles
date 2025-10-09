@@ -41,12 +41,19 @@ test: -test-prep $(addprefix test-,$(notdir $(wildcard test/*))) -test-report
 	@cat _build/test/report
 	@rm _build/test/report
 
-test-%:
+test-%: 
 	@scripts/cmd-install.sh $*
 	@scripts/cmd-install-verify.sh $*
 	@scripts/cmd-uninstall.sh $*
 	@scripts/cmd-uninstall-verify.sh $*
 
+test-install-%:
+	@scripts/cmd-install.sh $*
+	@scripts/cmd-install-verify.sh $*
+
+test-uninstall-%:
+	@scripts/cmd-uninstall.sh $*
+	@scripts/cmd-uninstall-verify.sh $*
 
 shellcheck:
 	shellcheck scripts/*

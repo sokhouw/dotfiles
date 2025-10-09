@@ -33,10 +33,12 @@ install_dir() {
 }
 
 install_config() {
+    if [ -e "${CONFIG_NAME}/$(basename "${1}")" ]; then
+        install_create_backup_mv "${CONFIG_NAME}/$(basename "${1}")"
+    fi
     os_cmd cp -r "${1}" "${CONFIG_HOME}/$(basename "${1}")"
     uninstall_instr rm -rf "${CONFIG_HOME}/$(basename "${1}")"
     config_dir="${CONFIG_HOME}/$(basename "${1}")"
-    #verify_instr "diff -qr ${1} ${CONFIG_HOME}/$(basename ${1})"
     verify_instr "diff -qr ${1} ${config_dir}"
 }
 

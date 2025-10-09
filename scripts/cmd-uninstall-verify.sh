@@ -12,8 +12,9 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 # ------------------------------------------------------------------------------
 
 if ! diff -qr "${HOME_DIR}" "${TEST_HOME_DIR}"; then
-    printf '%sFAILED%s\n' "${RED}" "${RESET}"
-    exit 1
+    printf '%sFAIL%s\n' "${RED}" "${RESET}"
+    printf '%s (uninstall): %sFAIL%s\n' "${TEST}" "${RED}" "${RESET}" >> _build/test/report
 else
     printf '%sPASS%s\n' "${GREEN}" "${RESET}"
+    printf '%s (uninstall): %sPASS%s\n' "${TEST}" "${GREEN}" "${RESET}" >> _build/test/report
 fi
