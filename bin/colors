@@ -2,24 +2,24 @@
 
 rgbf() {
     V=$((16+36*${1}+6*${2}+${3}))
-    printf "\033[38;5;${V}m%03d " ${V}
+    printf '\033[38;5;%sm%03d ' "${V}" "${V}"
 }
 
 rgbb() {
     V=$((16+36*${1}+6*${2}+${3}))
-    printf "\033[48;5;${V}m%03d " ${V}
+    printf '\033[48;5;%sm%03d ' "${V}" "${V}"
 }
 
 foreground() {
-    printf "\033[38;5;${1}m%03d " ${1}
+    printf '\033[38;5;%sm%03d ' "${1}" "${1}"
 }
 
 background() {
-    printf "\033[48;5;${1}m%03d " ${1}
+    printf '\033[48;5;%sm%03d ' "${1}" "${1}"
 }
 
 resetattrs() {
-    printf "\033[0;m"
+    printf '\033[0;m'
 }
 
 range() {
@@ -27,12 +27,12 @@ range() {
     to=${2}
     if [ "${from}" -lt "${to}" ]; then
         while [ "${from}" -le "${to}" ]; do
-            echo -n "${from} "
+            printf '%s ' "${from}"
             from=$((from + 1))
         done
     else
         while [ "${from}" -ge "${to}" ]; do
-            echo -n "${from} "
+            printf '%s ' "${from}"
             from=$((from - 1))
         done
     fi
@@ -43,11 +43,11 @@ range() {
 resetattrs
 
 for C in $(range 0 15); do
-   foreground ${C}
+   foreground "${C}"
 done
 echo
 for C in $(range 0 15); do
-    background ${C}
+    background "${C}"
 done
 echo
 
@@ -57,33 +57,33 @@ echo
 ## RGB-ish foreground colors
 
 for G in $(range 0 5); do
-    for B in $(range 0 5); do rgbf 0 ${G} ${B}; done
-    for B in $(range 5 0); do rgbf 1 ${G} ${B}; done
-    for B in $(range 0 5); do rgbf 2 ${G} ${B}; done
+    for B in $(range 0 5); do rgbf 0 "${G}" "${B}"; done
+    for B in $(range 5 0); do rgbf 1 "${G}" "${B}"; done
+    for B in $(range 0 5); do rgbf 2 "${G}" "${B}"; done
     echo
 done
 for G in $(range 5 0); do
-    for B in $(range 0 5); do rgbf 3 ${G} ${B}; done
-    for B in $(range 5 0); do rgbf 4 ${G} ${B}; done
-    for B in $(range 0 5); do rgbf 5 ${G} ${B}; done
+    for B in $(range 0 5); do rgbf 3 "${G}" "${B}"; done
+    for B in $(range 5 0); do rgbf 4 "${G}" "${B}"; done
+    for B in $(range 0 5); do rgbf 5 "${G}" "${B}"; done
     echo
 done
 
-resetattres
+resetattrs
 echo
 
 ## RGB-ish background colors
 
 for G in $(range 0 5); do
-    for B in $(range 0 5); do rgbb 0 ${G} ${B}; done
-    for B in $(range 5 0); do rgbb 1 ${G} ${B}; done
-    for B in $(range 0 5); do rgbb 2 ${G} ${B}; done
+    for B in $(range 0 5); do rgbb 0 "${G}" "${B}"; done
+    for B in $(range 5 0); do rgbb 1 "${G}" "${B}"; done
+    for B in $(range 0 5); do rgbb 2 "${G}" "${B}"; done
     echo
 done
 for G in $(range 5 0); do
-    for B in $(range 0 5); do rgbb 3 ${G} ${B}; done
-    for B in $(range 5 0); do rgbb 4 ${G} ${B}; done
-    for B in $(range 0 5); do rgbb 5 ${G} ${B}; done
+    for B in $(range 0 5); do rgbb 3 "${G}" "${B}"; done
+    for B in $(range 5 0); do rgbb 4 "${G}" "${B}"; done
+    for B in $(range 0 5); do rgbb 5 "${G}" "${B}"; done
     echo
 done
 
@@ -93,7 +93,7 @@ echo
 ## Gray foreground
 
 for C in $(range 232 255); do
-    foreground ${C}
+    foreground "${C}"
 done
 
 resetattrs
@@ -102,7 +102,7 @@ echo
 ## Gray background
 
 for C in $(range 232 255); do
-    background ${C}
+    background "${C}"
 done
 
 resetattrs

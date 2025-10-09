@@ -1,213 +1,182 @@
 #!/usr/bin/env sh
 
 RED=$(printf '\033[1;31m')
-GREEN=$(printf '\033[0;32m')
-BLUE=$(printf '\033[1;34m')
+GREEN=$(printf '\033[1;32m')
+# BLUE=$(printf '\033[1;34m')
 YELLOW=$(printf '\033[1;33m')
-GRAY=$(printf '\033[1;30m')
+GREY=$(printf '\033[1;30m')
 RESET=$(printf '\033[0;m')
+
+# root directory of dotfiles project. We're copying files from here
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+# ------------------------------------------------------------------------------
+# os commands
+# ------------------------------------------------------------------------------
+
+os_cmd() {
+    cmd="${1}"
+    printf '%s: ' "$*"
+    shift 1
+    if error=$("${cmd}" "$@" 2>&1 >/dev/null); then
+        printf '%sok%s\n' "${GREEN}" "${RESET}"
+    else
+        printf '%s%s%s\n' "${RED}" "${error}" "${RESET}"
+        exit 1
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# printing messages
+# ------------------------------------------------------------------------------
+
+msg_error() {
+    printf '%s[ERROR]%s %s\n' "${RED}" "${RESET}" "${1}"
+}
+
+msg_warn() {
+    printf '%s[WARN]%s %s\n' "${YELLOW}" "${RESET}" "${1}"
+}
+
+msg_info() {
+    printf '%s[INFO]%s %s\n' "${GREY}" "${RESET}" "${1}"
+}
+
+# ------------------------------------------------------------------------------
+# uninstall actions recorder/replayer
+# ------------------------------------------------------------------------------
 
 uninstall_instr() {
     echo "$*" >> "${UNINSTALL_FILE}"
 }
 
-os_cmd() {
-    printf '%s: ' "$*"
-    if err=$($* 2>&1 >/dev/null); then
-        printf '%sok%s\n' "${GREEN}" "${RESET}\n"
-    else
-        printf '%s%s%s\n' "${RED}" "${err}" "${RESET}\n"
-        exit 1
-    fi
-}
-
-create_link() {
-    target="${1}"
-    link_name="${2}"
-    error=$(ln -s "${target}" "${link_name}" 2>&1)
-    if [ "$?" = "0" ]; then
-        uninstall_instr rm "${link_name}"
-        printf "${GREEN}[soft-link]${RESET} ${link_name} -> ${target}\n"
-    else
-        printf "${RED}[soft-link]${RESET} ${link_name} -> ${target}${RESET}: ${error}\n"
-        exit 1
-    fi
-}
-
-create_dir() {
-    dir_name="${1}"
-    remove_content="${2}"
-    if [ -d "${dir_name}" ]; then
-        if [ -w "${dir_name}" ]; then
-            printf "${YELLOW}[directory]${RESET} \"${dir_name}\": already exists and is writeable\n"
-        else
-            printf "${RED}[directory]${RESET} \"${dir_name}\": already exists but it is not writeable\n"
-            exit 1
-        fi
-    else
-        if [ "${remove_content}" = "remove_content" ]; then
-            uninstall_instr "rm -rf ${dir_name}"
-        else
-            uninstall_instr "rmdir ${dir_name}"
-        fi
-        error=$(mkdir "${dir_name}" 2>&1)
-        if [ "$?" = "0" ]; then
-            printf "${GREEN}[directory]${RESET} ${dir_name}\n"
-        else
-            printf "${RED}[directory]${RESET} ${dir_name}: ${error}\n"
-            exit 1
-        fi
-    fi
-}
-
-backup_file() {
-    file="${1}"
-    if [ -f "${file}" ]; then
-        backup="${1}.bak.$(date +'%Y%m%d%H%M%S')"
-        error=$(cp --archive "${file}" "${backup}" 2>&1)
-        if [ "$?" = "0" ]; then
-            uninstall_instr "mv -f ${backup} ${file}"
-            printf "${GREEN}[backup]${RESET} ${file} -> ${backup}\n"
-        else
-            printf "${RED}[backup]${RESET} ${file} -> ${backup}: ${error}\n"
-        fi
-    fi
-}
-
-clone_repo() {
-    target_dir="${1}"
-    repo_name="${2}"
-    create_dir "${target_dir}" "remove_content"
-    error=$(git clone "https://github.com/${repo_name}" "${target_dir}" 2>&1)
-    if [ "$?" = "0" ]; then
-        printf "${GREEN}[github.com]${RESET} cloned ${repo_name} into ${target_dir}\n"
-    else
-        printf "${RED}[github.com]${RESET} failed to clone ${repo_name}: ${error}\n"
-        exit 1
-    fi
-}
-
-install_dotfiles() {
-    printf "${BLUE}Installing dotfiles${RESET}\n"
-    # bit of a checking & egg situation
-    # need to create that dir manually cause uninstall file is supposed to be in that dir
-    mkdir "${STATE_HOME}/dotfiles"
-    # ... thus manually adding instructions to ditch the dir and its contents
-    uninstall_instr "rm -rf ${STATE_HOME}/dotfiles"
-    dotfiles_dir="$(cd "$(dirname "$0")/.." && pwd)"
-    create_link "${dotfiles_dir}" "${DOTFILES_LINK}"
-
-    create_dir "${CONFIG_HOME}/dotfiles"
-}
-
-install_bashrc() {
-    printf "${BLUE}Installing bashrc${RESET}\n"
-    file="${HOME_DIR}/.bashrc"
-    content="\n# dotfiles addition\nsource ${DOTFILES_LINK}/bashrc/init.sh ${DOTFILES_LINK}/bashrc/init.sh"
-    backup_file "${file}"
-    error=$(echo "${content}" 2>&1 >> ${file})
-    if [ "$?" = "0" ]; then
-        printf "${GREEN}[change]${RESET} ${file}\n"
-    else
-        printf "${RED}[change]${RESET} ${file}: ${error}\n"
-        exit 1
-    fi
-}
-
-install_bin() {
-    printf "${BLUE}Installing bin files${RESET}\n"
-    # copy bin files
-    create_dir "${BIN_HOME}"
-    for f in $(ls -1 "${DOTFILES_LINK}/bin"); do
-        create_link "${DOTFILES_LINK}/bin/${f}" "${BIN_HOME}/${f}"
-    done
-}
-
-install_config_git() {
-    create_link "${DOTFILES_LINK}/config/git" "${CONFIG_HOME}/git"
-}
-
-install_config_neovim() {
-    printf "${BLUE}Installing neovim config${RESET}\n"
-    create_link "${DOTFILES_LINK}/config/nvim-base" "${CONFIG_HOME}/nvim-base" 
-    create_link "${DOTFILES_LINK}/config/nvim-main" "${CONFIG_HOME}/nvim-main"
-}
-
-install_config_tmux() {
-    printf "${BLUE}Installing tmux config${RESET}\n"
-    create_link "${DOTFILES_LINK}/config/tmux" "${CONFIG_HOME}/tmux"
-    create_dir "${STATE_HOME}/tmux"
-    create_dir "${STATE_HOME}/tmux/plugins"
-    grep "^set -g @plugin" "${DOTFILES_LINK}/config/tmux/tmux.conf" | cut -f4 -d' ' | sed "s/'//g" | while IFS= read -r plugin; do
-        clone_repo "${STATE_HOME}/tmux/plugins/$(basename ${plugin})" "${plugin}"
-    done
-    backup_file "${HOME_DIR}/.tmux.conf"
-    rm -f "${HOME_DIR}/.tmux.conf"
-    create_link "${CONFIG_HOME}/tmux/tmux.conf" "${HOME_DIR}/.tmux.conf"
-}
-
-install_config_rebar3() {
-    printf "${BLUE}Installing rebar3 config${RESET}\n"
-    create_link "${DOTFILES_LINK}/config/rebar3" "${CONFIG_HOME}/rebar3" 
-}
-
-install() {
-    if [ -e "${STATE_HOME}/dotfiles" ]; then
-        printf "${RED}[dotfiles]${RESET} already installed\n"
-        exit 1
-    fi
-
-    trap on_exit_install EXIT
-
-    install_dotfiles
-    install_bashrc
-    install_bin
-    install_config_git
-    install_config_neovim
-    install_config_tmux
-    install_config_rebar3
-}
-
 uninstall() {
-    if [ ! -f "${UNINSTALL_FILE}" ]; then
-        printf "${RED}[dotfiles]${RESET} not installed\n"
-        exit 1
+    if [ -z "${UNINSTALL_FILE}" ]; then
+        UNINSTALL_FILE="${STATE_HOME}"/dotfiles/uninstall
     fi
-    run_uninstall_instr
-}
-
-checkhealth() {
-    if [ -d ${CONFIG_HOME}/dotfiles ]; then
-        printf "${GREEN}[checkhealth]${RESET} installed\n"
-    else
-        printf "${YELLOW}[checkhealth]${RESET} NOT installed\n"
-    fi
-}
-
-on_exit_install() {
-    result="$?"
-    if [ -f "${UNINSTALL_FILE}" ]; then
-        # reverse the order of uninstall instructions
-        sed -i '1!G;h;$!d' ${UNINSTALL_FILE} 
-        if [ "${result}" != 0 ] && [ "${PROFILE}" = "default" ]; then
-            run_uninstall_instr
-        fi
-    fi
-}
-
-run_uninstall_instr() {
-    cat "${UNINSTALL_FILE}" | while IFS= read -r cmd; do
-        printf "${GREEN}[uninstall]${RESET} ${cmd}\n"
-        sh -c "${cmd}"
-        if [ "$?" != "0" ]; then
-            printf "${RED}[uninstall]${RESET} failed to run last command\n"
-            exit 1
+    # move uninstall file to temp location so its parent dir can be rmdir-ed
+    instr_file="$(mktemp)"
+    mv -f "${UNINSTALL_FILE}" "${instr_file}"
+    cat "${instr_file}" | while IFS= read -r cmd; do
+        printf '%s: ' "${cmd}"
+        if error=$(sh -c "${cmd}" 2<&1 >/dev/null); then
+            printf '%sok%s\n' "${GREEN}" "${RESET}"
+        else
+            printf '%s%s%s\n' "${RED}" "${error}" "${RESET}"
         fi
     done
 }
 
 # ------------------------------------------------------------------------------
-# MAIN
+# install actions
+# ------------------------------------------------------------------------------
+
+install_ensure_dir() {
+    if [ -d "${1}" ]; then
+        if [ ! -w "${1}" ]; then
+            printf 'directory %s: %snot writeable%s\n' "${1}" "${RED}" "${RESET}"
+            exit 1
+        fi
+    else
+        if [ ! -d "$(dirname "${1}")" ]; then
+            install_ensure_dir "$(dirname "${1}")"
+        fi
+        if error=$(mkdir "${1}" 2>&1 >/dev/null); then
+            printf 'directory %s: %screated%s\n' "${1}" "${GREEN}" "${RESET}"
+            uninstall_instr rmdir "${1}"
+        else
+            printf 'directory %s: %s%s%s\n' "${1}" "${RED}" "${error}" "${RESET}"
+            exit 1
+        fi
+    fi
+}
+
+install_config() {
+    if [ "${INSTALL_SOFT_LINKING}" = "1" ]; then
+        os_cmd ln -sf "${1}" "${CONFIG_HOME}"/$(basename "${1}")
+        uninstall_instr rm "${CONFIG_HOME}"/$(basename "${1}")
+    else
+        os_cmd cp -r "${1}" "${CONFIG_HOME}"/$(basename "${1}")
+        uninstall_instr rm -rf "${CONFIG_HOME}"/$(basename "${1}")
+    fi
+}
+
+install_soft_link() {
+    os_cmd ln -s "${1}" "${2}"
+    uninstall_instr rm "${2}"
+}
+
+install_tmux_plugin() {
+    echo "cloning ${1} into ${2}: "
+    printf '%s' "${GREY}"
+    if GIT_TERMINAL_PROMPT=0 git -c credential.helper= clone "https://github.com/${1}" "${2}"; then
+        printf '%s' "${RESET}"
+        printf '%sok%s\n' "${GREEN}" "${RESET}"
+        uninstall_instr rm -rf "${2}"
+        return 0
+    else
+        printf '%s' "${RESET}"
+        printf '%sfailed%s\n' "${RED}" "${RESET}"
+        exit 1
+    fi
+}
+
+install_bashrc_modules() {
+    if [ -f "${HOME_DIR}"/.bashrc ] && [ -w "${HOME_DIR}"/.bashrc ]; then
+        bashrc_init="${CONFIG_HOME}/bashrc/init.sh"
+        printf 'installing bashrc modules: '
+        if printf '\n# dotfiles addition\nsource "%s" "%s"\n' "${bashrc_init}" "${bashrc_init}" >> "${HOME_DIR}"/.bashrc; then
+            printf '%sok%s\n' "${GREEN}" "${RESET}"
+        else
+            printf '%sfailed%s\n' "${RED}" "${RESET}"
+            exit 1
+        fi
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# function install
+# ------------------------------------------------------------------------------
+
+install() {
+    UNINSTALL_FILE=$(mktemp)
+    install_ensure_dir "${STATE_HOME}"
+    install_ensure_dir "${STATE_HOME}/dotfiles"
+    mv "${UNINSTALL_FILE}" "${STATE_HOME}"/dotfiles/uninstall
+    UNINSTALL_FILE="${STATE_HOME}"/dotfiles/uninstall
+    install_ensure_dir "${CONFIG_HOME}"
+    for f in "${ROOT_DIR}/config"/*; do
+        install_config "${f}"
+    done 
+    install_soft_link "${CONFIG_HOME}/tmux/tmux.conf" "${HOME_DIR}"/.tmux.conf
+    install_ensure_dir "${STATE_HOME}"/tmux/plugins
+    grep "^set -g @plugin" "${ROOT_DIR}/config/tmux/tmux.conf" | cut -f4 -d' ' | sed "s/'//g" | while IFS= read -r plugin; do
+        install_tmux_plugin "${plugin}" "${STATE_HOME}/tmux/plugins/$(basename ${plugin})"
+    done || exit 1 # that constructs creates subshell thus we use "|| exit 1" to propagate error up
+    install_bashrc_modules
+    INSTALL_OK=1
+}
+
+# ------------------------------------------------------------------------------
+
+install_on_exit() {
+    if [ -f "${UNINSTALL_FILE}" ]; then
+        # reverse the order of uninstall instructions
+        sed -i '1!G;h;$!d' "${UNINSTALL_FILE}"
+        if [ -z "${INSTALL_OK}" ]; then
+            uninstall
+        fi
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# function uninstall
+# ------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------
+# function prepare
+#   create global variables with values depending on cmd-line arguments
 # ------------------------------------------------------------------------------
 
 prepare() {
@@ -228,16 +197,23 @@ prepare() {
                 VERBOSE="1"
                 shift 1
                 ;;
+            --soft-link)
+                if [ "${COMMAND}" = "install" ]; then
+                    INSTALL_SOFT_LINKING="1"
+                else
+                    bad_args
+                fi
+                shift 1
         esac
     done
 
     # use XDG variables if set or in test profile, otherwise use their defaults
-    if [ -z "${XDG_CONFIG_HOME}" ] || [ "${PROFILE}" = "test" ]; then 
+    if [ -z "${XDG_CONFIG_HOME}" ] || [ "${PROFILE}" = "test" ]; then
         CONFIG_HOME="${HOME_DIR}/.config"
     else
         CONFIG_HOME="${XDG_CONFIG_HOME}"
     fi
-    if [ -z "${XDG_STATE_HOME}" ] || [ "${PROFILE}" = "test" ]; then 
+    if [ -z "${XDG_STATE_HOME}" ] || [ "${PROFILE}" = "test" ]; then
         STATE_HOME="${HOME_DIR}/.local/state"
     else
         STATE_HOME="${XDG_STATE_HOME}"
@@ -246,40 +222,242 @@ prepare() {
     # set global variables
     DOTFILES_LINK="${HOME_DIR}/.dotfiles"
     BIN_HOME="${HOME_DIR}/bin"
-    UNINSTALL_FILE=${STATE_HOME}/dotfiles/uninstall
-
-    # add some content to test home dir in test profile
-    if [ "${PROFILE}" = "test" ]; then
-        mkdir ${HOME_DIR}
-        mkdir -p ${HOME_DIR}/.config
-        mkdir -p ${HOME_DIR}/.local/state
-        echo "# line 1\n# line 2\n" > ${HOME_DIR}/.bashrc
-    fi
 
     if [ ! -z "${VERBOSE}" ]; then
-        printf "${GRAY}[debug]${RESET} HOME_DIR=\"${HOME_DIR}\"\n"
-        printf "${GRAY}[debug]${RESET} CONFIG_HOME=\"${CONFIG_HOME}\"\n"
-        printf "${GRAY}[debug]${RESET} STATE_HOME=\"${STATE_HOME}\"\n"
-        printf "${GRAY}[debug]${RESET} UNINSTALL_FILE=\"${UNINSTALL_FILE}\"\n"
+        msg_info "ROOT_DIR=\"${ROOT_DIR}\""
+        msg_info "HOME_DIR=\"${HOME_DIR}\""
+        msg_info "CONFIG_HOME=\"${CONFIG_HOME}\""
+        msg_info "STATE_HOME=\"${STATE_HOME}\""
+        msg_info "UNINSTALL_FILE=\"${UNINSTALL_FILE}\""
+    fi
+
+    # add some content to test home dir in test profile
+    if [ "${COMMAND}" = "install" ] && [ "${PROFILE}" = "test" ]; then
+        mkdir "${HOME_DIR}"
+        touch "${HOME_DIR}/.bashrc"
+        printf "# line 1\n# line 2\n" >> "${HOME_DIR}/.bashrc"
     fi
 }
 
-case "${1}" in
+# ------------------------------------------------------------------------------
+# funtion: bad_args
+# ------------------------------------------------------------------------------
+
+bad_args() {
+    msg_error "Bad arguments."
+    echo "Usage:"
+    echo "  dotfiles install [--test] [--verbose] [--soft-link]"
+    echo "  dotfiles uninstall [--test] [--verbose]"
+    echo "  dotfiles checkhealth [--test] [--verbose]"
+    exit 1
+}
+
+# ------------------------------------------------------------------------------
+# main program
+# ------------------------------------------------------------------------------
+
+COMMAND="${1}"
+case "${COMMAND}" in
     install)
-        prepare $*
-        trap on_exit_install EXIT
+        trap install_on_exit EXIT
+        prepare "$@"
         install
         ;;
     uninstall)
-        prepare $*
+        prepare "$@"
         uninstall
         ;;
     checkhealth)
-        prepare $*
-        checkhealth
+        prepare "$@"
         ;;
     *)
-        printf "${RED}[arguments]${RESET} use dotfiles install|uninstall|checkhealth [--test] [--verbose]\n"
-        exit 1
+        bad_args
         ;;
 esac
+
+#
+# create_link() {
+#     target="${1}"
+#     link_name="${2}"
+#     if error=$(ln -s "${target}" "${link_name}" 2>&1 >/dev/null); then
+#         uninstall_instr rm "${link_name}"
+#         printf "${GREEN}[soft-link]${RESET} ${link_name} -> ${target}\n"
+#     else
+#         printf "${RED}[soft-link]${RESET} ${link_name} -> ${target}${RESET}: ${error}\n"
+#         exit 1
+#     fi
+# }
+#
+# create_dir() {
+#     dir_name="${1}"
+#     remove_content="${2}"
+#     if [ -d "${dir_name}" ]; then
+#         if [ -w "${dir_name}" ]; then
+#             printf "${YELLOW}[directory]${RESET} \"${dir_name}\": already exists and is writeable\n"
+#         else
+#             printf "${RED}[directory]${RESET} \"${dir_name}\": already exists but it is not writeable\n"
+#             exit 1
+#         fi
+#     else
+#         if [ "${remove_content}" = "remove_content" ]; then
+#             uninstall_instr "rm -rf ${dir_name}"
+#         else
+#             uninstall_instr "rmdir ${dir_name}"
+#         fi
+#         error=$(mkdir "${dir_name}" 2>&1)
+#         if [ "$?" = "0" ]; then
+#             printf "${GREEN}[directory]${RESET} ${dir_name}\n"
+#         else
+#             printf "${RED}[directory]${RESET} ${dir_name}: ${error}\n"
+#             exit 1
+#         fi
+#     fi
+# }
+#
+# backup_file() {
+#     file="${1}"
+#     if [ -f "${file}" ]; then
+#         backup="${1}.bak.$(date +'%Y%m%d%H%M%S')"
+#         error=$(cp --archive "${file}" "${backup}" 2>&1)
+#         if [ "$?" = "0" ]; then
+#             uninstall_instr "mv -f ${backup} ${file}"
+#             printf "${GREEN}[backup]${RESET} ${file} -> ${backup}\n"
+#         else
+#             printf "${RED}[backup]${RESET} ${file} -> ${backup}: ${error}\n"
+#         fi
+#     fi
+# }
+#
+# clone_repo() {
+#     target_dir="${1}"
+#     repo_name="${2}"
+#     create_dir "${target_dir}" "remove_content"
+#     error=$(git clone "https://github.com/${repo_name}" "${target_dir}" 2>&1)
+#     if [ "$?" = "0" ]; then
+#         printf "${GREEN}[github.com]${RESET} cloned ${repo_name} into ${target_dir}\n"
+#     else
+#         printf "${RED}[github.com]${RESET} failed to clone ${repo_name}: ${error}\n"
+#         exit 1
+#     fi
+# }
+#
+# install_dotfiles() {
+#     printf "${BLUE}Installing dotfiles${RESET}\n"
+#     # bit of a checking & egg situation
+#     # need to create that dir manually cause uninstall file is supposed to be in that dir
+#     mkdir "${STATE_HOME}/dotfiles"
+#     # ... thus manually adding instructions to ditch the dir and its contents
+#     uninstall_instr "rm -rf ${STATE_HOME}/dotfiles"
+#     dotfiles_dir="$(cd "$(dirname "$0")/.." && pwd)"
+#     create_link "${dotfiles_dir}" "${DOTFILES_LINK}"
+#
+#     create_dir "${CONFIG_HOME}/dotfiles"
+# }
+#
+# install_bashrc() {
+#     printf "${BLUE}Installing bashrc${RESET}\n"
+#     file="${HOME_DIR}/.bashrc"
+#     content="\n# dotfiles addition\nsource ${DOTFILES_LINK}/bashrc/init.sh ${DOTFILES_LINK}/bashrc/init.sh"
+#     backup_file "${file}"
+#     error=$(echo "${content}" 2>&1 >> ${file})
+#     if [ "$?" = "0" ]; then
+#         printf "${GREEN}[change]${RESET} ${file}\n"
+#     else
+#         printf "${RED}[change]${RESET} ${file}: ${error}\n"
+#         exit 1
+#     fi
+# }
+#
+# install_bin() {
+#     printf "${BLUE}Installing bin files${RESET}\n"
+#     # copy bin files
+#     create_dir "${BIN_HOME}"
+#     for f in $(ls -1 "${DOTFILES_LINK}/bin"); do
+#         create_link "${DOTFILES_LINK}/bin/${f}" "${BIN_HOME}/${f}"
+#     done
+# }
+#
+# install_config_git() {
+#     create_link "${DOTFILES_LINK}/config/git" "${CONFIG_HOME}/git"
+# }
+#
+# install_config_neovim() {
+#     printf "${BLUE}Installing neovim config${RESET}\n"
+#     create_link "${DOTFILES_LINK}/config/nvim-base" "${CONFIG_HOME}/nvim-base"
+#     create_link "${DOTFILES_LINK}/config/nvim-main" "${CONFIG_HOME}/nvim-main"
+# }
+#
+# install_config_tmux() {
+#     printf "${BLUE}Installing tmux config${RESET}\n"
+#     create_link "${DOTFILES_LINK}/config/tmux" "${CONFIG_HOME}/tmux"
+#     create_dir "${STATE_HOME}/tmux"
+#     create_dir "${STATE_HOME}/tmux/plugins"
+#     grep "^set -g @plugin" "${DOTFILES_LINK}/config/tmux/tmux.conf" | cut -f4 -d' ' | sed "s/'//g" | while IFS= read -r plugin; do
+#         clone_repo "${STATE_HOME}/tmux/plugins/$(basename ${plugin})" "${plugin}"
+#     done
+#     backup_file "${HOME_DIR}/.tmux.conf"
+#     rm -f "${HOME_DIR}/.tmux.conf"
+#     create_link "${CONFIG_HOME}/tmux/tmux.conf" "${HOME_DIR}/.tmux.conf"
+# }
+#
+# install_config_rebar3() {
+#     printf "${BLUE}Installing rebar3 config${RESET}\n"
+#     create_link "${DOTFILES_LINK}/config/rebar3" "${CONFIG_HOME}/rebar3"
+# }
+#
+# install() {
+#     if [ -e "${STATE_HOME}/dotfiles" ]; then
+#         printf "${RED}[dotfiles]${RESET} already installed\n"
+#         exit 1
+#     fi
+#
+#     trap on_exit_install EXIT
+#
+#     install_dotfiles
+#     install_bashrc
+#     install_bin
+#     install_config_git
+#     install_config_neovim
+#     install_config_tmux
+#     install_config_rebar3
+# }
+#
+# uninstall() {
+#     if [ ! -f "${UNINSTALL_FILE}" ]; then
+#         printf "${RED}[dotfiles]${RESET} not installed\n"
+#         exit 1
+#     fi
+#     run_uninstall_instr
+# }
+#
+# checkhealth() {
+#     if [ -d ${CONFIG_HOME}/dotfiles ]; then
+#         printf "${GREEN}[checkhealth]${RESET} installed\n"
+#     else
+#         printf "${YELLOW}[checkhealth]${RESET} NOT installed\n"
+#     fi
+# }
+#
+# on_exit_install() {
+#     result="$?"
+#     if [ -f "${UNINSTALL_FILE}" ]; then
+#         # reverse the order of uninstall instructions
+#         sed -i '1!G;h;$!d' ${UNINSTALL_FILE}
+#         if [ "${result}" != 0 ] && [ "${PROFILE}" = "default" ]; then
+#             run_uninstall_instr
+#         fi
+#     fi
+# }
+#
+# run_uninstall_instr() {
+#     cat "${UNINSTALL_FILE}" | while IFS= read -r cmd; do
+#         printf "${GREEN}[uninstall]${RESET} ${cmd}\n"
+#         sh -c "${cmd}"
+#         if [ "$?" != "0" ]; then
+#             printf "${RED}[uninstall]${RESET} failed to run last command\n"
+#             exit 1
+#         fi
+#     done
+# }
+
+
