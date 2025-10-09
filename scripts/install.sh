@@ -1,46 +1,8 @@
 #!/usr/bin/env sh
 
-RED=$(printf '\033[1;31m')
-GREEN=$(printf '\033[1;32m')
-# BLUE=$(printf '\033[1;34m')
-YELLOW=$(printf '\033[1;33m')
-GREY=$(printf '\033[1;30m')
-RESET=$(printf '\033[0;m')
-
 # root directory of dotfiles project. We're copying files from here
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-
-# ------------------------------------------------------------------------------
-# os commands
-# ------------------------------------------------------------------------------
-
-os_cmd() {
-    cmd="${1}"
-    printf '%s: ' "$*"
-    shift 1
-    if error=$("${cmd}" "$@" 2>&1 >/dev/null); then
-        printf '%sok%s\n' "${GREEN}" "${RESET}"
-    else
-        printf '%s%s%s\n' "${RED}" "${error}" "${RESET}"
-        exit 1
-    fi
-}
-
-# ------------------------------------------------------------------------------
-# printing messages
-# ------------------------------------------------------------------------------
-
-msg_error() {
-    printf '%s[ERROR]%s %s\n' "${RED}" "${RESET}" "${1}"
-}
-
-msg_warn() {
-    printf '%s[WARN]%s %s\n' "${YELLOW}" "${RESET}" "${1}"
-}
-
-msg_info() {
-    printf '%s[INFO]%s %s\n' "${GREY}" "${RESET}" "${1}"
-}
+. "${ROOT_DIR}/scripts/common.sh"
 
 # ------------------------------------------------------------------------------
 # install actions
@@ -188,104 +150,10 @@ uninstall_instr() {
     echo "$*" >> "${UNINSTALL_FILE}"
 }
 
-
-# ------------------------------------------------------------------------------
-# function prepare
-#   create global variables with values depending on cmd-line arguments
-# ------------------------------------------------------------------------------
-
-prepare() {
-    PROFILE="default"
-    VERBOSE=""
-    HOME_DIR="${HOME}"
-    shift 1
-
-    # process command-line arguments
-    while [ ! -z "${1}" ]; do
-        case "${1}" in
-            --test)
-                PROFILE="test"
-                HOME_DIR="/tmp/dotfiles"
-                shift 1
-                ;;
-            --verbose)
-                VERBOSE="1"
-                shift 1
-                ;;
-            --soft-link)
-                if [ "${COMMAND}" = "install" ]; then
-                    INSTALL_SOFT_LINKING="1"
-                else
-                    bad_args
-                fi
-                shift 1
-        esac
-    done
-
-    # use XDG variables if set or in test profile, otherwise use their defaults
-    if [ -z "${XDG_CONFIG_HOME}" ] || [ "${PROFILE}" = "test" ]; then
-        CONFIG_HOME="${HOME_DIR}/.config"
-    else
-        CONFIG_HOME="${XDG_CONFIG_HOME}"
-    fi
-    if [ -z "${XDG_STATE_HOME}" ] || [ "${PROFILE}" = "test" ]; then
-        STATE_HOME="${HOME_DIR}/.local/state"
-    else
-        STATE_HOME="${XDG_STATE_HOME}"
-    fi
-
-    # set global variables
-    DOTFILES_LINK="${HOME_DIR}/.dotfiles"
-    BIN_HOME="${HOME_DIR}/bin"
-
-    if [ ! -z "${VERBOSE}" ]; then
-        msg_info "ROOT_DIR=\"${ROOT_DIR}\""
-        msg_info "HOME_DIR=\"${HOME_DIR}\""
-        msg_info "CONFIG_HOME=\"${CONFIG_HOME}\""
-        msg_info "STATE_HOME=\"${STATE_HOME}\""
-        msg_info "UNINSTALL_FILE=\"${UNINSTALL_FILE}\""
-    fi
-
-    # add some content to test home dir in test profile
-    if [ "${COMMAND}" = "install" ] && [ "${PROFILE}" = "test" ]; then
-        mkdir "${HOME_DIR}"
-        touch "${HOME_DIR}/.bashrc"
-        printf "# line 1\n# line 2\n" >> "${HOME_DIR}/.bashrc"
-    fi
-}
-
-# ------------------------------------------------------------------------------
-# funtion: bad_args
-# ------------------------------------------------------------------------------
-
-bad_args() {
-    msg_error "Bad arguments."
-    echo "Usage:"
-    echo "  dotfiles install [--test] [--verbose] [--soft-link]"
-    echo "  dotfiles uninstall [--test] [--verbose]"
-    echo "  dotfiles checkhealth [--test] [--verbose]"
-    exit 1
-}
-
 # ------------------------------------------------------------------------------
 # main program
 # ------------------------------------------------------------------------------
 
-COMMAND="${1}"
-case "${COMMAND}" in
-    install)
-        trap install_on_exit EXIT
-        prepare "$@"
-        install
-        ;;
-    uninstall)
-        prepare "$@"
-        uninstall
-        ;;
-    checkhealth)
-        prepare "$@"
-        ;;
-    *)
-        bad_args
-        ;;
-esac
+trap install_on_exit EXIT
+prepare install
+install

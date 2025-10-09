@@ -1,11 +1,23 @@
-checkhealth:
-	bin/dotfiles checkhealth
-
 install:
-	bin/dotfiles install
+	scripts/install.sh
 
 uninstall:
-	bin/dotfiles uninstall
+	scripts/uninstall.sh
+
+version:
+	@git describe --tags --dirty --always 2>/dev/null || echo "unknown"
+
+release:
+	@if [ -z "$(version)" ]; then \
+		echo "Missing version argument"; \
+		exit 1; \
+	fi
+	@if [ ! -z "$$(git status --porcelain)" ]; then \
+		echo "Not ready for release"; \
+		git status --porcelain; \
+		exit 1; \
+	fi
+	git tag -a v$(version) -m "version $(version)"
 
 test: test-shellcheck-shell test-shellcheck-bin
 
