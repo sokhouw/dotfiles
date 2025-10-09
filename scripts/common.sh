@@ -69,6 +69,13 @@ uninstall_instr() {
     echo "$*" >> "${UNINSTALL_FILE}" 
 }
 
+is_installed() {
+    if [ -z "${UNINSTALL_FILE}" ]; then
+        UNINSTALL_FILE="${STATE_HOME}"/dotfiles/uninstall
+    fi
+    [ -f "${UNINSTALL_FILE}" ]
+}
+
 # ------------------------------------------------------------------------------
 # preparing execution environment for install & uninstall
 # ------------------------------------------------------------------------------
@@ -77,7 +84,6 @@ prepare() {
     arg_command="${1}"
     shift 1
     PROFILE="default"
-    VERBOSE=""
     HOME_DIR="${HOME}"
 
     # process command-line arguments
@@ -88,17 +94,6 @@ prepare() {
                 HOME_DIR="/tmp/dotfiles"
                 shift 1
                 ;;
-            --verbose)
-                VERBOSE="1"
-                shift 1
-                ;;
-            --soft-link)
-                if [ "${arg_command}" = "install" ]; then
-                    INSTALL_SOFT_LINKING="1"
-                else
-                    bad_args
-                fi
-                shift 1
         esac
     done
 
@@ -115,16 +110,7 @@ prepare() {
     fi
 
     # set global variables
-    DOTFILES_LINK="${HOME_DIR}/.dotfiles"
-    BIN_HOME="${HOME_DIR}/bin"
-
-    if [ ! -z "${VERBOSE}" ]; then
-        msg_info "ROOT_DIR=\"${ROOT_DIR}\""
-        msg_info "HOME_DIR=\"${HOME_DIR}\""
-        msg_info "CONFIG_HOME=\"${CONFIG_HOME}\""
-        msg_info "STATE_HOME=\"${STATE_HOME}\""
-        msg_info "UNINSTALL_FILE=\"${UNINSTALL_FILE}\""
-    fi
+    VERSION_FILE="${CONFIG_HOME}/dotfiles/VERSION"
 
     # add some content to test home dir in test profile
     if [ "${arg_command}" = "install" ] && [ "${PROFILE}" = "test" ]; then

@@ -8,7 +8,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 # install actions
 # ------------------------------------------------------------------------------
 
-install_ensure_dir() {
+install_dir() {
     if [ -d "${1}" ]; then
         if [ ! -w "${1}" ]; then
             printf 'directory %s: %snot writeable%s\n' "${1}" "${RED}" "${RESET}"
@@ -16,7 +16,7 @@ install_ensure_dir() {
         fi
     else
         if [ ! -d "$(dirname "${1}")" ]; then
-            install_ensure_dir "$(dirname "${1}")"
+            install_dir "$(dirname "${1}")"
         fi
         if error=$(mkdir "${1}" 2>&1 >/dev/null); then
             printf 'directory %s: %screated%s\n' "${1}" "${GREEN}" "${RESET}"
@@ -29,13 +29,8 @@ install_ensure_dir() {
 }
 
 install_config() {
-    if [ "${INSTALL_SOFT_LINKING}" = "1" ]; then
-        os_cmd ln -sf "${1}" "${CONFIG_HOME}"/$(basename "${1}")
-        uninstall_instr rm "${CONFIG_HOME}"/$(basename "${1}")
-    else
-        os_cmd cp -r "${1}" "${CONFIG_HOME}"/$(basename "${1}")
-        uninstall_instr rm -rf "${CONFIG_HOME}"/$(basename "${1}")
-    fi
+    os_cmd cp -r "${1}" "${CONFIG_HOME}/$(basename "${1}")"
+    uninstall_instr rm -rf "${CONFIG_HOME}/$(basename "${1}")"
 }
 
 install_create_backup_mv() {
@@ -94,20 +89,25 @@ install_bash_modules() {
 # ------------------------------------------------------------------------------
 
 install() {
+    VERSION="$(git describe --tags --dirty --always 2>/dev/null || echo "unknown")"
+    echo "Installing dotfiles-${VERSION}"
     UNINSTALL_FILE=$(mktemp)
-    install_ensure_dir "${STATE_HOME}"
-    install_ensure_dir "${STATE_HOME}/dotfiles"
-    mv "${UNINSTALL_FILE}" "${STATE_HOME}"/dotfiles/uninstall
-    UNINSTALL_FILE="${STATE_HOME}"/dotfiles/uninstall
-    install_ensure_dir "${STATE_HOME}/dotfiles/backup"
-    install_ensure_dir "${CONFIG_HOME}"
+    install_dir "${STATE_HOME}"
+    install_dir "${STATE_HOME}/dotfiles"
+    mv "${UNINSTALL_FILE}" "${STATE_HOME}/dotfiles/uninstall"
+    UNINSTALL_FILE="${STATE_HOME}/dotfiles/uninstall"
+    install_dir "${STATE_HOME}/dotfiles/backup"
+    install_dir "${CONFIG_HOME}"
+    install_dir "${CONFIG_HOME}/dotfiles"
+    echo "${VERSION}" > "${VERSION_FILE}"
+    uninstall_instr rm "${VERSION_FILE}"
     for f in "${ROOT_DIR}/config"/*; do
         install_config "${f}"
     done 
-    install_soft_link "${CONFIG_HOME}/tmux/tmux.conf" "${HOME_DIR}"/.tmux.conf
-    install_ensure_dir "${STATE_HOME}"/tmux/plugins
+    install_soft_link "${CONFIG_HOME}/tmux/tmux.conf" "${HOME_DIR}/.tmux.conf"
+    install_dir "${STATE_HOME}/tmux/plugins"
     grep "^set -g @plugin" "${ROOT_DIR}/config/tmux/tmux.conf" | cut -f4 -d' ' | sed "s/'//g" | while IFS= read -r plugin; do
-        install_tmux_plugin "${plugin}" "${STATE_HOME}/tmux/plugins/$(basename ${plugin})"
+        install_tmux_plugin "${plugin}" "${STATE_HOME}/tmux/plugins/$(basename "${plugin}")"
     done || exit 1 # that constructs creates subshell thus we use "|| exit 1" to propagate error up
     install_bash_modules
     INSTALL_OK=1
@@ -131,7 +131,7 @@ install_on_exit() {
 
 uninstall() {
     if [ -z "${UNINSTALL_FILE}" ]; then
-        UNINSTALL_FILE="${STATE_HOME}"/dotfiles/uninstall
+        UNINSTALL_FILE="${STATE_HOME}/dotfiles/uninstall"
     fi
     # move uninstall file to temp location so its parent dir can be rmdir-ed
     instr_file="$(mktemp)"
@@ -154,6 +154,6 @@ uninstall_instr() {
 # main program
 # ------------------------------------------------------------------------------
 
-trap install_on_exit EXIT
+trap install_on_exit EXIT INT
 prepare install
 install
