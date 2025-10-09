@@ -6,10 +6,18 @@
 
 RED=$(printf '\033[1;31m')
 GREEN=$(printf '\033[1;32m')
-# BLUE=$(printf '\033[1;34m')
+BLUE=$(printf '\033[1;34m')
 YELLOW=$(printf '\033[1;33m')
 GREY=$(printf '\033[1;30m')
 RESET=$(printf '\033[0;m')
+
+# ------------------------------------------------------------------------------
+# checking installed version
+# ------------------------------------------------------------------------------
+
+installed_version() {
+    cat "${CONFIG_HOME}/dotfiles/VERSION" 2>/dev/null
+}
 
 # ------------------------------------------------------------------------------
 # running os commands
@@ -44,14 +52,10 @@ msg_info() {
 }
 
 # ------------------------------------------------------------------------------
-# uninstall
-#   this function needs variable UNINSTALL_FILE
+# uninstall instructions
 # ------------------------------------------------------------------------------
 
 uninstall_instr_run() {
-    if [ -z "${UNINSTALL_FILE}" ]; then
-        UNINSTALL_FILE="${STATE_HOME}"/dotfiles/uninstall
-    fi
     # move uninstall file to temp location so its parent dir can be rmdir-ed
     instr_file="$(mktemp)"
     mv -f "${UNINSTALL_FILE}" "${instr_file}"
@@ -63,59 +67,94 @@ uninstall_instr_run() {
             printf '%s%s%s\n' "${RED}" "${error}" "${RESET}"
         fi
     done
+    rm "${instr_file}"
 }
 
 uninstall_instr() {
     echo "$*" >> "${UNINSTALL_FILE}" 
 }
 
+# ------------------------------------------------------------------------------
+# verify instructions
+# ------------------------------------------------------------------------------
+
+verify_instr() {
+    echo "$*" >> "${VERIFY_FILE}"
+}
+
+verify_instr_run() {
+    # move uninstall file to temp location so its parent dir can be rmdir-ed
+    verify_file="$(mktemp)"
+    mv -f "${VERIFY_FILE}" "${verify_file}"
+    cat "${verify_file}" | while IFS= read -r cond; do
+        printf '%s: ' "${cond}"
+        if eval "${cond}"; then
+            printf '%sok%s\n' "${GREEN}" "${RESET}"
+        else
+            rm "${verify_file}"
+            exit 1
+        fi
+    done || return 1
+    rm -f "${verify_file}"
+}
+
+# ------------------------------------------------------------------------------
+# is_Installed
+# ------------------------------------------------------------------------------
+
 is_installed() {
     if [ -z "${UNINSTALL_FILE}" ]; then
-        UNINSTALL_FILE="${STATE_HOME}"/dotfiles/uninstall
+        UNINSTALL_FILE="${STATE_HOME}/dotfiles/uninstall"
     fi
     [ -f "${UNINSTALL_FILE}" ]
 }
 
 # ------------------------------------------------------------------------------
-# preparing execution environment for install & uninstall
+# preparing execution environment for install/uninstall default/test
 # ------------------------------------------------------------------------------
 
-prepare() {
-    arg_command="${1}"
-    shift 1
-    PROFILE="default"
+case "${COMMAND}" in
+    install|uninstall|install-verify|uninstall-verify)
+        if [ -z "${TEST}" ]; then
+            printf '%s===> %s%s\n' "${BLUE}" "${COMMAND}" "${RESET}"
+        elif [ ! -d "test/${TEST}" ]; then
+            msg_error "bad test: ${TEST}"
+            exit 1
+        else
+            printf '%s===> %s (%s test)%s\n' "${BLUE}" "${COMMAND}" "${TEST}" "${RESET}"
+        fi
+        ;;
+    *)
+        msg_error "bad command: ${COMMAND}"
+        exit 1
+        ;;
+esac
+
+if [ -z "${TEST}" ]; then
     HOME_DIR="${HOME}"
-
-    # process command-line arguments
-    while [ ! -z "${1}" ]; do
-        case "${1}" in
-            --test)
-                PROFILE="test"
-                HOME_DIR="/tmp/dotfiles"
-                shift 1
-                ;;
-        esac
-    done
-
-    # use XDG variables if set or in test profile, otherwise use their defaults
-    if [ -z "${XDG_CONFIG_HOME}" ] || [ "${PROFILE}" = "test" ]; then
-        CONFIG_HOME="${HOME_DIR}/.config"
-    else
-        CONFIG_HOME="${XDG_CONFIG_HOME}"
+else
+    HOME_DIR="$(pwd)/_build/test/${TEST}"
+    TEST_HOME_DIR="$(pwd)/test/${TEST}"
+    if [ "${COMMAND}" = "install" ]; then
+        os_cmd rm -rf "${HOME_DIR}"
+        os_cmd mkdir -p "$(dirname "${HOME_DIR}")"
+        os_cmd cp -r "${TEST_HOME_DIR}" "$(dirname "${HOME_DIR}")/${TEST}"
     fi
-    if [ -z "${XDG_STATE_HOME}" ] || [ "${PROFILE}" = "test" ]; then
-        STATE_HOME="${HOME_DIR}/.local/state"
-    else
-        STATE_HOME="${XDG_STATE_HOME}"
-    fi
+fi
 
-    # set global variables
-    VERSION_FILE="${CONFIG_HOME}/dotfiles/VERSION"
+# use XDG variables if set or in test profile, otherwise use their defaults
+if [ -z "${XDG_CONFIG_HOME}" ] || [ ! -z "${TEST}" ]; then
+    CONFIG_HOME="${HOME_DIR}/.config"
+else
+    CONFIG_HOME="${XDG_CONFIG_HOME}"
+fi
+if [ -z "${XDG_STATE_HOME}" ] || [ ! -z "${TEST}" ]; then
+    STATE_HOME="${HOME_DIR}/.local/state"
+else
+    STATE_HOME="${XDG_STATE_HOME}"
+fi
 
-    # add some content to test home dir in test profile
-    if [ "${arg_command}" = "install" ] && [ "${PROFILE}" = "test" ]; then
-        mkdir "${HOME_DIR}"
-        touch "${HOME_DIR}/.bashrc"
-        printf "# line 1\n# line 2\n" >> "${HOME_DIR}/.bashrc"
-    fi
-}
+# set global variables
+VERSION_FILE="${CONFIG_HOME}/dotfiles/VERSION"
+UNINSTALL_FILE="${STATE_HOME}/dotfiles/uninstall"
+VERIFY_FILE="${STATE_HOME}/dotfiles/verify"

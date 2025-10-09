@@ -64,6 +64,7 @@ dotfiles/
 │   └── colors
 ├── scripts/ (support scripts)
 │    ├── check.sh 
+│    ├── common.sh 
 │    ├── install.sh 
 │    └── uninstall.sh 
 └── config/ (goes into ~/.config)

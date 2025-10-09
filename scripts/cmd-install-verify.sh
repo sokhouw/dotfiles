@@ -1,18 +1,19 @@
 #!/usr/bin/env sh
 
+COMMAND="install-verify"
+TEST="${1}"
+
 # root directory of dotfiles project. We're copying files from here
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-echo "including [check][${2}]"
-. "${ROOT_DIR}/scripts/common.sh" "check" "${2}"
+. "${ROOT_DIR}/scripts/common.sh"
 
 # ------------------------------------------------------------------------------
-# main program
+# preparing test
 # ------------------------------------------------------------------------------
 
-prepare check
-version="$(cat "${VERSION_FILE}" 2>/dev/null)"
-if [ ! -z "${version}" ]; then
-    echo "dotfiles-${version} installed"
+if ! verify_instr_run; then
+    printf '%sFAILED%s\n' "${RED}" "${RESET}"
+    exit 1
 else
-    echo "dotfiles not installed"
+    printf '%sPASS%s\n' "${GREEN}" "${RESET}"
 fi

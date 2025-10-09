@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 
+COMMAND="install"
+TEST="${1}"
+
 # root directory of dotfiles project. We're copying files from here
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 . "${ROOT_DIR}/scripts/common.sh"
@@ -21,6 +24,7 @@ install_dir() {
         if error=$(mkdir "${1}" 2>&1 >/dev/null); then
             printf 'directory %s: %screated%s\n' "${1}" "${GREEN}" "${RESET}"
             uninstall_instr rmdir "${1}"
+            verify_instr "[ -d "${1}" ]"
         else
             printf 'directory %s: %s%s%s\n' "${1}" "${RED}" "${error}" "${RESET}"
             exit 1
@@ -31,6 +35,7 @@ install_dir() {
 install_config() {
     os_cmd cp -r "${1}" "${CONFIG_HOME}/$(basename "${1}")"
     uninstall_instr rm -rf "${CONFIG_HOME}/$(basename "${1}")"
+    verify_instr "diff -qr ${1} ${CONFIG_HOME}/$(basename ${1})"
 }
 
 install_create_backup_mv() {
@@ -41,14 +46,16 @@ install_create_backup_mv() {
 }
 
 install_create_backup_cp() {
-    if [ -e "${1}" ]; then
+    if [ -f "${1}" ]; then
         os_cmd cp "${1}" "${1}".bak
         uninstall_instr mv -f "${1}".bak "${1}"
     fi
 }
 
 install_soft_link() {
-    if [ ! -e "${2}" ]; then
+    echo "[${2}]"
+    if [ -e "${2}" ]; then
+        echo "backing up"
         install_create_backup_mv "${2}"
     fi
     os_cmd ln -s "${1}" "${2}"
@@ -58,15 +65,25 @@ install_soft_link() {
 install_tmux_plugin() {
     echo "cloning ${1} into ${2}: "
     printf '%s' "${GREY}"
-    if GIT_TERMINAL_PROMPT=0 git -c credential.helper= clone "https://github.com/${1}" "${2}"; then
+    if [ -z "${TEST}" ]; then
+        if GIT_TERMINAL_PROMPT=0 git -c credential.helper= clone "https://github.com/${1}" "${2}"; then
+            printf '%s' "${RESET}"
+            printf '%sok%s\n' "${GREEN}" "${RESET}"
+            uninstall_instr rm -rf "${2}"
+            return 0
+        else
+            printf '%s' "${RESET}"
+            printf '%sfailed%s\n' "${RED}" "${RESET}"
+            return 1
+        fi
+    else
+        echo "test-clone"
+        mkdir "${2}"
+        touch "${2}/cloned"
         printf '%s' "${RESET}"
         printf '%sok%s\n' "${GREEN}" "${RESET}"
         uninstall_instr rm -rf "${2}"
         return 0
-    else
-        printf '%s' "${RESET}"
-        printf '%sfailed%s\n' "${RED}" "${RESET}"
-        exit 1
     fi
 }
 
@@ -89,16 +106,33 @@ install_bash_modules() {
 # ------------------------------------------------------------------------------
 
 install() {
+    installed_version="$(installed_version)"
+    if [ ! -z "${installed_version}" ]; then
+        msg_error "dotfiles-${installed_version} is already installed"
+        exit 1
+    fi
     VERSION="$(git describe --tags --dirty --always 2>/dev/null || echo "unknown")"
     echo "Installing dotfiles-${VERSION}"
+    
+    # use /tmp base files in early stages
+    main_uninstall_file="${UNINSTALL_FILE}"
+    main_verify_file="${VERIFY_FILE}"
     UNINSTALL_FILE=$(mktemp)
+    VERIFY_FILE=$(mktemp)
+
     install_dir "${STATE_HOME}"
     install_dir "${STATE_HOME}/dotfiles"
+    
+    # use main files again
     mv "${UNINSTALL_FILE}" "${STATE_HOME}/dotfiles/uninstall"
-    UNINSTALL_FILE="${STATE_HOME}/dotfiles/uninstall"
+    mv "${VERIFY_FILE}" "${STATE_HOME}/dotfiles/verify"
+    UNINSTALL_FILE="${main_uninstall_file}"
+    VERIFY_FILE="${main_verify_file}"
+
     install_dir "${STATE_HOME}/dotfiles/backup"
     install_dir "${CONFIG_HOME}"
     install_dir "${CONFIG_HOME}/dotfiles"
+
     echo "${VERSION}" > "${VERSION_FILE}"
     uninstall_instr rm "${VERSION_FILE}"
     for f in "${ROOT_DIR}/config"/*; do
@@ -155,5 +189,4 @@ uninstall_instr() {
 # ------------------------------------------------------------------------------
 
 trap install_on_exit EXIT INT
-prepare install
-install
+install || exit 1

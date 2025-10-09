@@ -1,11 +1,8 @@
 install:
-	@scripts/install.sh
+	@scripts/cmd-install.sh
 
 uninstall:
-	@scripts/uninstall.sh
-
-check:
-	@scripts/check.sh
+	@scripts/cmd-uninstall.sh
 
 version:
 	@git describe --tags --dirty --always 2>/dev/null || echo "unknown"
@@ -24,7 +21,19 @@ release:
 
 test: test-shellcheck
 
+test-install: $(addprefix test-install-,$(notdir $(wildcard test/*)))
+
+test-install-%:
+	@scripts/cmd-install.sh $*
+	@scripts/cmd-install-verify.sh $*
+	@scripts/cmd-uninstall.sh $*
+	@scripts/cmd-uninstall-verify.sh $*
+
+
 test-shellcheck:
 	shellcheck scripts/*
 	shellcheck bin/*
 	shellcheck config/shell/bash/*
+
+clean:
+	rm -rf _build
