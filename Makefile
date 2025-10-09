@@ -7,10 +7,12 @@ install:
 uninstall:
 	bin/dotfiles uninstall
 
-test: test-shellcheck-bashrc test-shellcheck-bin
+test: test-shellcheck-shell test-shellcheck-bin
 
-test-shellcheck-bashrc:
-	shellcheck bashrc/*
+test-shellcheck-shell: test-shellcheck-shell-bash
+
+test-shellcheck-shell-bash:
+	shellcheck config/shell/bash/*
 
 test-shellcheck-bin:
 	shellcheck bin/colors
