@@ -7,7 +7,8 @@ Personal collection of configuration files and scripts to automate and standardi
 ## Table of Contents
 
 1. [Features](#features)  
-2. [Dependencies](#dependencies)  
+2. [Dependencies](#dependencies) 
+3. [File Structure](#file-structure)
 3. [Installation](#installation)  
 4. [Uninstallation](#uninstallation)  
 5. [Getting Started](#getting-started)  
@@ -54,6 +55,28 @@ To enable full functionality (especially for Neovim LSP support), the following 
 Additionally, **one of the Nerd Fonts** (e.g. *Hack Nerd Font*, *FiraCode Nerd Font*, *JetBrains Mono Nerd Font*, etc.) is required for proper rendering of icons, ligatures, and UI elements in the statusline, file explorer, etc.
 
 Ensure those are installed and available in your `PATH` (or your system’s font registry for the Nerd Font).
+
+## File Structure
+
+```
+dotfiles/
+├── bin/ (goes into ~/bin)
+│   └── colors
+├── scripts/ (support scripts)
+│    ├── check.sh 
+│    ├── install.sh 
+│    └── uninstall.sh 
+└── config/ (goes into ~/.config)
+    ├── nvim-base/ 
+    ├── nvim-main/
+    ├── rebar3/
+    ├── tmux/
+    └── shell/ 
+        └── bash/ (modules below are sourced from ~/.bashrc)
+            ├── man-colors.sh
+            ├── nvim-aliases.sh
+            └── path.sh
+```
 
 ## Installation
 
