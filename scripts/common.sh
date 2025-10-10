@@ -114,14 +114,11 @@ is_installed() {
 # ------------------------------------------------------------------------------
 
 case "${COMMAND}" in
-    install|uninstall|is-installed|install-verify|uninstall-verify)
+    install|uninstall|is-installed|install-verify|uninstall-verify|test-run|report-show|report-clean)
         if [ -z "${TEST}" ]; then
             printf '%s===> %s%s\n' "${BLUE}" "${COMMAND}" "${RESET}"
-        elif [ ! -d "test/${TEST}" ]; then
-            msg_error "bad test: ${TEST}"
-            exit 1
         else
-            printf '%s===> %s (%s test)%s\n' "${BLUE}" "${COMMAND}" "${TEST}" "${RESET}"
+            printf '%s===> %s (%s)%s\n' "${BLUE}" "${COMMAND}" "${TEST}" "${RESET}"
         fi
         ;;
     *)
@@ -130,6 +127,7 @@ case "${COMMAND}" in
         ;;
 esac
 
+# setup home directory
 if [ -z "${TEST}" ]; then
     HOME_DIR="${HOME}"
 else
@@ -153,12 +151,18 @@ if [ -z "${XDG_STATE_HOME}" ] || [ ! -z "${TEST}" ]; then
 else
     STATE_HOME="${XDG_STATE_HOME}"
 fi
+if [ -z "${XDG_DATA_HOME}" ] || [ ! -z "${TEST}" ]; then
+    DATA_HOME="${HOME_DIR}/.local/share"
+else
+    DATA_HOME="${XDG_DATA_HOME}"
+fi
 
 # set global variables
 VERSION_FILE="${CONFIG_HOME}/dotfiles/VERSION"
 UNINSTALL_FILE="${STATE_HOME}/dotfiles/uninstall"
 VERIFY_FILE="${STATE_HOME}/dotfiles/verify"
+TEST_REPORT="_build/test/report"
 
-export HOME_DIR CONFIG_HOME STATE_HOME
-export TEST_HOME_DIR
+export HOME_DIR CONFIG_HOME STATE_HOME DATA_HOME
 export VERSION_FILE UNINSTALL_FILE VERIFY_FILE HOME
+export TEST_HOME_DIR TEST_REPORT TEST

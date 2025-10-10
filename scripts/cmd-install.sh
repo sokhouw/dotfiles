@@ -33,8 +33,8 @@ install_dir() {
 }
 
 install_config() {
-    if [ -e "${CONFIG_NAME}/$(basename "${1}")" ]; then
-        install_create_backup_mv "${CONFIG_NAME}/$(basename "${1}")"
+    if [ -e "${CONFIG_HOME}/$(basename "${1}")" ]; then
+        install_create_backup_mv "${CONFIG_HOME}/$(basename "${1}")"
     fi
     os_cmd cp -r "${1}" "${CONFIG_HOME}/$(basename "${1}")"
     uninstall_instr rm -rf "${CONFIG_HOME}/$(basename "${1}")"
@@ -133,9 +133,10 @@ install() {
     UNINSTALL_FILE="${main_uninstall_file}"
     VERIFY_FILE="${main_verify_file}"
 
-    install_dir "${STATE_HOME}/dotfiles/backup"
     install_dir "${CONFIG_HOME}"
     install_dir "${CONFIG_HOME}/dotfiles"
+    install_dir "${STATE_HOME}/dotfiles/backup"
+    uninstall_instr rm "${VERIFY_FILE}"
 
     echo "${VERSION}" > "${VERSION_FILE}"
     uninstall_instr rm "${VERSION_FILE}"
@@ -143,9 +144,9 @@ install() {
         install_config "${f}"
     done 
     install_soft_link "${CONFIG_HOME}/tmux/tmux.conf" "${HOME_DIR}/.tmux.conf"
-    install_dir "${STATE_HOME}/tmux/plugins"
+    install_dir "${DATA_HOME}/tmux/plugins"
     grep "^set -g @plugin" "${ROOT_DIR}/config/tmux/tmux.conf" | cut -f4 -d' ' | sed "s/'//g" | while IFS= read -r plugin; do
-        install_tmux_plugin "${plugin}" "${STATE_HOME}/tmux/plugins/$(basename "${plugin}")"
+        install_tmux_plugin "${plugin}" "${DATA_HOME}/tmux/plugins/$(basename "${plugin}")"
     done || exit 1 # that constructs creates subshell thus we use "|| exit 1" to propagate error up
     install_bash_modules
     INSTALL_OK=1

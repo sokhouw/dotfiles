@@ -3,20 +3,20 @@
 # ------------------------------------------------------------------------------
 
 install:
-	@scripts/cmd-install.sh
+	scripts/cmd-install.sh
 
 uninstall:
-	@scripts/cmd-uninstall.sh
+	scripts/cmd-uninstall.sh
 
 is-installed:
-	@scripts/cmd-is-installed.sh
+	scripts/cmd-is-installed.sh
 
 # ------------------------------------------------------------------------------
 #  developer land
 # ------------------------------------------------------------------------------
 
 version:
-	@git describe --tags --dirty --always 2>/dev/null || echo "unknown"
+	git describe --tags --dirty --always 2>/dev/null || echo "unknown"
 
 release:
 	@if [ -z "$(version)" ]; then \
@@ -30,35 +30,41 @@ release:
 	fi
 	git tag -a v$(version) -m "version $(version)"
 
-test: -test-prep $(addprefix test-,$(notdir $(wildcard test/*))) -test-report
-
--test-prep:
-	rm -f _build/test/report
-	touch _build/test/report
-
--test-report:
-	@echo "Results: pass($$(grep PASS _build/test/report | wc -l)) fail($$(grep FAIL _build/test/report | wc -l))"
-	@cat _build/test/report
-	@rm _build/test/report
-
-test-%: 
-	@scripts/cmd-install.sh $*
-	@scripts/cmd-install-verify.sh $*
-	@scripts/cmd-uninstall.sh $*
-	@scripts/cmd-uninstall-verify.sh $*
-
-test-install-%:
-	@scripts/cmd-install.sh $*
-	@scripts/cmd-install-verify.sh $*
-
-test-uninstall-%:
-	@scripts/cmd-uninstall.sh $*
-	@scripts/cmd-uninstall-verify.sh $*
+# ------------------------------------------------------------------------------
+#  developer land - shellcheck
+# ------------------------------------------------------------------------------
 
 shellcheck:
 	shellcheck scripts/*
 	shellcheck bin/*
 	shellcheck config/shell/bash/*
+
+# ------------------------------------------------------------------------------
+#  developer land - testing
+# ------------------------------------------------------------------------------
+
+.PHONY: test
+test: run-prep run-all-tests run-report 
+
+test-%:
+	$(MAKE) run-prep run-test-$* run-report
+
+run-prep:
+	@scripts/cmd-test.sh report-clean
+
+run-all-tests: $(addprefix run-test-,$(notdir $(wildcard test/*)))
+
+run-report:
+	@scripts/cmd-test.sh report-show
+
+# ------------------------------------------------------------------------------
+
+run-test-%:
+	@scripts/cmd-test.sh test-run $*
+
+# ------------------------------------------------------------------------------
+#  developer land
+# ------------------------------------------------------------------------------
 
 clean:
 	rm -rf _build

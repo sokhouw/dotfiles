@@ -1,6 +1,6 @@
 # ChangeLog
 
-## [1.0,0](https://github.com/sokhouw/dotfiles) 2025/10/09
+## [1.0,0](https://github.com/sokhouw/dotfiles) 2025/10/12
 
 ### Features
 
@@ -26,6 +26,7 @@
 * shell modules
   * [bash](https://www.gnu.org/software/bash)
     * man colors
-    * neovim aliases
+    * ls (directories first)
+    * neovim aliases to enable multi-config
     * ~/bin path
     * XDG paths
