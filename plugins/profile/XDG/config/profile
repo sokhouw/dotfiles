@@ -1,0 +1,6 @@
+# shellcheck shell=sh
+
+# see https://unix.stackexchange.com/questions/119/colors-in-man-pages
+export PAGER=most
+
+alias ls='ls -h --group-directories-first --color=auto'

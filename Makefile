@@ -1,66 +1,95 @@
+RED := \033[1;31m
+RESET := \033[0;m
+
+ifndef plugins
+	all_plugins := $(strip dotfiles $(sort $(filter-out dotfiles,$(notdir $(wildcard plugins/*)))))
+else
+coma := ,
+	all_plugins := $(strip dotfiles $(filter-out dotfiles,$(subst $(coma), ,$(plugins))))
+endif
+
+ifdef test
+	test_arg := --test $(test)
+	app_tests := $(test)
+else
+	app_tests := $(sort $(notdir $(wildcard test/app/*)))
+endif
+
+ifeq "$(dryrun)" "1"
+	dryrun_arg := --dry-run
+endif
+
+ifeq "$(debug)" "1"
+	debug_arg := --debug
+endif
+
+all_args := $(test_arg) $(debug_arg) $(dryrun_arg)
+
 # ------------------------------------------------------------------------------
-#  user land
+#  user land - install
 # ------------------------------------------------------------------------------
 
-install:
-	scripts/cmd-install.sh
+install: -install-prepare -install-plugins -install-commit
+
+-install-prepare:
+	scripts/make-app.sh prepare $(all_args) --plugins "$(all_plugins)"
+
+-install-plugins: $(addprefix -install-plugin-,$(all_plugins)) -install-commit
+
+-install-plugin-%:
+	scripts/make-app.sh install-plugin $(all_args) --plugin $*
+
+-install-commit:
+	scripts/make-app.sh commit $(all_args)
+
+# ------------------------------------------------------------------------------
+#  user land - uninstall
+# ------------------------------------------------------------------------------
 
 uninstall:
-	scripts/cmd-uninstall.sh
-
-is-installed:
-	scripts/cmd-is-installed.sh
-
-# ------------------------------------------------------------------------------
-#  developer land
-# ------------------------------------------------------------------------------
-
-version:
-	git describe --tags --dirty --always 2>/dev/null || echo "unknown"
-
-release:
-	@if [ -z "$(version)" ]; then \
-		echo "Missing version argument"; \
-		exit 1; \
-	fi
-	@if [ ! -z "$$(git status --porcelain)" ]; then \
-		echo "Not ready for release"; \
-		git status --porcelain; \
-		exit 1; \
-	fi
-	git tag -a v$(version) -m "version $(version)"
+	scripts/make-app.sh uninstall $(all_args)
 
 # ------------------------------------------------------------------------------
 #  developer land - shellcheck
 # ------------------------------------------------------------------------------
 
 shellcheck:
-	shellcheck scripts/*
-	shellcheck bin/*
-	shellcheck config/shell/bash/*
+	@if shellcheck $$(grep -Rl "^# shellcheck" .); then echo "ok"; fi
+
+shellcheck-%:
+	@echo $*
+	shellcheck $*
 
 # ------------------------------------------------------------------------------
-#  developer land - testing
+#  developer land - test-install
 # ------------------------------------------------------------------------------
 
-.PHONY: test
-test: run-prep run-all-tests run-report 
+test: test-install test-changes test-uninstall
 
-test-%:
-	$(MAKE) run-prep run-test-$* run-report
+test-install: $(addprefix test-install-,$(app_tests))
 
-run-prep:
-	@scripts/cmd-test.sh report-clean
+test-changes: $(addprefix test-changes-,$(app_tests))
 
-run-all-tests: $(addprefix run-test-,$(notdir $(wildcard test/*)))
+test-uninstall: $(addprefix test-uninstall-,$(app_tests))
 
-run-report:
-	@scripts/cmd-test.sh report-show
+test-install-%: 
+	mkdir -p _build/test/app/
+	cp -a test/app/$*/. _build/test/app/$*
+	$(MAKE) install debug=$(debug) dryrun=$(dryrun) test="$*"
 
-# ------------------------------------------------------------------------------
-
-run-test-%:
-	@scripts/cmd-test.sh test-run $*
+test-changes-%:
+	for plugin in $(all_plugins); do \
+	    if [ ! -d "_build/test/app/$*/.local/share/$${plugin}" ]; then \
+	        mkdir -p "_build/test/app/$*/.local/share/$${plugin}"; \
+	    fi; \
+	    if [ ! -d "_build/test/app/$*/.local/state/$${plugin}" ]; then \
+	        mkdir -p "_build/test/app/$*/.local/state/$${plugin}"; \
+	    fi \
+	done
+	
+test-uninstall-%:
+	$(MAKE) uninstall debug=$(debug) dryrun=$(dryrun) test="$*"
+	@printf "$(RED)"; if ! diff -qr test/app/$* _build/test/app/$*; then printf "$(RESET)"; exit 1; fi; printf "$(RESET)"
 
 # ------------------------------------------------------------------------------
 #  developer land
