@@ -1,7 +1,7 @@
 RED := \033[1;31m
 RESET := \033[0;m
 
-ifndef plugins
+ifndef plugin
 	all_plugins := $(strip dotfiles $(sort $(filter-out dotfiles,$(notdir $(wildcard plugins/*)))))
 else
 coma := ,
@@ -64,32 +64,30 @@ shellcheck-%:
 #  developer land - test-install
 # ------------------------------------------------------------------------------
 
-test: test-install test-changes test-uninstall
+test: test-install test-uninstall test-verify
 
 test-install: $(addprefix test-install-,$(app_tests))
 
-test-changes: $(addprefix test-changes-,$(app_tests))
-
 test-uninstall: $(addprefix test-uninstall-,$(app_tests))
+
+test-verify: $(addprefix test-verify-,$(app_tests))
 
 test-install-%: 
 	mkdir -p _build/test/app/
-	cp -a test/app/$*/. _build/test/app/$*
+	cp -a test/app/$*/HOME/. _build/test/app/$*
 	$(MAKE) install debug=$(debug) dryrun=$(dryrun) test="$*"
+	@if [ -x "test/app/$*/test-runner.sh" ]; then \
+	    ( cd _build/test/app/$* ; ../../../../test/app/$*/test-runner.sh after-install ); \
+	fi
 
-test-changes-%:
-	for plugin in $(all_plugins); do \
-	    if [ ! -d "_build/test/app/$*/.local/share/$${plugin}" ]; then \
-	        mkdir -p "_build/test/app/$*/.local/share/$${plugin}"; \
-	    fi; \
-	    if [ ! -d "_build/test/app/$*/.local/state/$${plugin}" ]; then \
-	        mkdir -p "_build/test/app/$*/.local/state/$${plugin}"; \
-	    fi \
-	done
-	
 test-uninstall-%:
 	$(MAKE) uninstall debug=$(debug) dryrun=$(dryrun) test="$*"
-	@printf "$(RED)"; if ! diff -qr test/app/$* _build/test/app/$*; then printf "$(RESET)"; exit 1; fi; printf "$(RESET)"
+
+test-verify-%:
+	@if [ -x "test/app/$*/test-runner.sh" ]; then \
+	    ( cd _build/test/app/$* ; ../../../../test/app/$*/test-runner.sh before-verify ); \
+	fi
+	@printf "$(RED)"; if ! diff -qr test/app/$*/HOME _build/test/app/$*; then printf "$(RESET)"; exit 1; fi; printf "$(RESET)"
 
 # ------------------------------------------------------------------------------
 #  developer land

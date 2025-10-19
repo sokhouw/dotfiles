@@ -3,29 +3,6 @@
 . "$(dirname "${0}")/lib-dotfiles.sh"
 init "$@"
 
-# action_init_dir() {
-#     if [ ! -e "${1}" ]; then
-#         action_init_dir "$(dirname "${1}")"
-#         mkdir "${1}"
-#         {
-#             echo "[D:] init dir \"${1}\""
-#             echo "[U:] rmdir \"${1}\""
-#             echo
-#         } >> "${JOURNAL_FILE}"
-#     fi
-# }
-
-action_init_file() {
-    if [ ! -e "${1}" ]; then
-        {
-            echo "[D:] init file \"${1}\""
-            echo "[I:] touch \"${1}\""
-            echo "[U:] rm \"${1}\""
-            echo
-        } >> "${JOURNAL_FILE}"
-    fi
-}
-
 action() {
     if ! grep "\[D:.*${1}\$" "${JOURNAL_FILE}" 1>/dev/null 2>/dev/null; then
         msg_debug "make-app:action" "${1}"
@@ -92,21 +69,39 @@ dotfiles_init_xdg() {
 }
 
 dotfiles_install_xdg_dir() {
-    plugin_xdg="${1}"
-    target_xdg="${2}"
-    parent_xdg="$(dirname "${target_xdg}")"
-    if [ -e "${target_xdg}" ]; then
-        backup_move "${target_xdg}"
+    plugin_xdg_dir="${1}"
+    target_xdg_dir="${2}"
+    parent_xdg="$(dirname "${target_xdg_dir}")"
+    if [ -e "${target_xdg_dir}" ]; then
+        backup_move "${target_xdg_dir}"
     else
-        action "cleanup of '${target_xdg}'" \
+        action "remove '${target_xdg_dir}'" \
                "" \
-               "rm -rf \"${target_xdg}\""
+               "rm -rf \"${target_xdg_dir}\""
     fi
-    if [ -e "${plugin_xdg}" ]; then
+    if [ -e "${plugin_xdg_dir}" ]; then
         dotfiles_init_xdg "${parent_xdg}"
-        action "install XDG '${plugin_xdg}'" \
-               "cp -r '${plugin_xdg}' '${target_xdg}'" \
-               "rm -rf '${target_xdg}'"
+        action "install XDG dir '${plugin_xdg_dir}'" \
+               "cp -r '${plugin_xdg_dir}' '${target_xdg_dir}'" \
+               "rm -rf '${target_xdg_dir}'"
+    fi
+}
+
+dotfiles_install_xdg_files() {
+    plugin_xdg_dir="${1}"
+    target_xdg_dir="${2}"
+
+    if [ -e "${PLUGIN_DIR}/XDG/bin" ]; then
+        dotfiles_init_xdg "${BIN_HOME}"
+        for plugin_xdg_file in "${plugin_xdg_dir}"/*; do
+            target_xdg_file="${target_xdg_dir}/$(basename "${plugin_xdg_file}")"
+            if [ -e "${target_xdg_file}" ]; then
+                backup_move "${target_xdg_file}"
+            fi
+            action "install XDG file '${plugin_xdg_file}'" \
+                   "cp '${plugin_xdg_file}' '${target_xdg_file}'" \
+                   "rm '${target_xdg_file}'"
+        done
     fi
 }
 
@@ -114,10 +109,6 @@ case "${TASK}" in
     prepare)
         if [ ! -e "${CONFIG_HOME}/dotfiles" ]; then
             mkdir -p "$(dirname "${JOURNAL_FILE}")" && rm -f "${JOURNAL_FILE}"
-            # action_init_dir "${CONFIG_HOME}"
-            # action_init_dir "${DATA_HOME}"
-            # action_init_dir "${STATE_HOME}"
-            # action_init_file "${HOME_DIR}/.profile"
         else
             msg_error "make-app:prepare" "dotfiles already installed"
             exit 1
@@ -128,17 +119,15 @@ case "${TASK}" in
         dotfiles_install_xdg_dir "${PLUGIN_DIR}/XDG/config" "${CONFIG_HOME}/${PLUGIN}"
         dotfiles_install_xdg_dir "${PLUGIN_DIR}/XDG/share" "${DATA_HOME}/${PLUGIN}"
         dotfiles_install_xdg_dir "${PLUGIN_DIR}/XDG/state" "${STATE_HOME}/${PLUGIN}"
-        dotfiles_install_xdg_dir "${PLUGIN_DIR}/XDG/cache" "${CACHE_HOME}/${PLUGIN}"
-        dotfiles_source_file "${PLUGIN_DIR}/XDG/config/profile" "${CONFIG_HOME}/${PLUGIN}/profile" "${HOME_DIR}/.profile"
-        # per plugin install actions
-        install_file="${PLUGIN_DIR}/dotfiles-install.sh"
-        eff_install_file=$(mktemp)
+        dotfiles_install_xdg_files "${PLUGIN_DIR}/XDG/bin" "${BIN_HOME}"
+        dotfiles_source_file "${PLUGIN_DIR}/XDG/config/profile" "${CONFIG_HOME}/${PLUGIN}/profile" "${PROFILE_FILE}"
+        install_file="${PLUGIN_DIR}/install.sh"
         msg_info "Installing plugin '${PLUGIN}' in '${HOME_DIR}'"
         if [ -x "${install_file}" ]; then
-            cat "${install_file}" | sed "s/\${PLUGIN}/${PLUGIN}/g" > "${eff_install_file}"
             msg_info "Install file '${install_file}'"
-            . "${eff_install_file}"
-            rm "${eff_install_file}"
+            if ! . "${install_file}"; then
+                exit 1
+            fi
         else
             msg_info "No install file '${install_file}'"
         fi

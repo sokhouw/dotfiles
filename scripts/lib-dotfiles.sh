@@ -25,14 +25,11 @@ timestamp() {
 execute() {
     location="${1}" && shift
     if result=$(eval "$*") 2>&1; then
-        if [ ! -z "${DEBUG}" ]; then
-            printf '%s[DEBUG] (%s)%s %s\n%s\n%sOK%s\n' "${YELLOW}" "${location}" "${RESET}" "$*" "$result" "${GREEN}" "${RESET}"
-        fi
+        printf '%s %sOK%s\n' "$*" "${GREEN}" "${RESET}"
     else
-        printf '%s[ERROR] (%s)%s %s %s%s%s\n' "${RED}" "${location}" "${RESET}" "$*" "${RED}" "${result}" "${RESET}"
+        printf '%s %s%s%s\n' "$*" "${RED}" "${result}" "${RESET}"
         exit 1
     fi
-    printf '%s' "${result}"
 }
 
 # ------------------------------------------------------------------------------
@@ -145,17 +142,8 @@ parse_cmdline() {
 # initialization
 # ------------------------------------------------------------------------------
 
-show_progress() {
-    if [ ! -z "${TEST}" ]; then
-        a1=" test:${TEST}"
-    fi
-    if [ ! -z "${PLUGIN}" ]; then
-        a2=" plugin:${PLUGIN}"
-    fi
-    printf '%s===> [%s:%s:%s]%s%s%s\n' "${BLUE}" "${COMMAND}" "${TASK}" "${PROFILE}" "${a1}" "${a2}" "${RESET}"
-}
-
 init_dirs() {
+    # TODO accept parapeter that can specify target home dir
     case "${PROFILE}" in
         default)
             HOME_DIR="${HOME}"
@@ -170,6 +158,11 @@ init_dirs() {
 }
 
 init_variables() {
+    if [ -z "${XDG_BIN_HOME}" ] || [ "${PROFILE}" = "test" ]; then
+        BIN_HOME="${HOME_DIR}/.local/bin"
+    else
+        BIN_HOME="${XDG_BIN_HOME}"
+    fi
     if [ -z "${XDG_CONFIG_HOME}" ] || [ "${PROFILE}" = "test" ]; then
         CONFIG_HOME="${HOME_DIR}/.config"
     else
@@ -190,69 +183,19 @@ init_variables() {
     else
         CACHE_HOME="${XDG_CACHE_HOME}"
     fi
-    JOURNAL_FILE="${ROOT}/_build/install/journal"
+    JOURNAL_FILE="${ROOT}/_build/${PROFILE}/journal"
     UNINSTALL_FILE="${CONFIG_HOME}/dotfiles/uninstall.sh"
-}
-
-export_variables() {
+    PROFILE_FILE="${HOME_DIR}/.bash_profile"
     export HOME_DIR
-    export CONFIG_HOME DATA_HOME STATE_HOME CACHE_HOME
-    export JOURNAL_FILE UNINSTALL_FILE
+    export BIN_HOME CONFIG_HOME DATA_HOME STATE_HOME CACHE_HOME
+    export JOURNAL_FILE UNINSTALL_FILE PROFILE_FILE
     export PLUGIN_DIR
     export PLUGIN ALL_PLUGINS
     export DRY_RUN
-    if [ ! -z "${DEBUG}" ]; then
-        for name in HOME_DIR CONFIG_HOME DATA_HOME STATE_HOME CACHE_HOME JOURNAL_FILE UNINSTALL_FILE PLUGIN_DIR DRY_RUN; do
-            value="--UNDEFINED--"
-            eval "value=\$$name"
-            msg_debug "lib_dotfiles:export_variables" "${name}='${value}'"
-        done
-    fi
-}
-
-# safety_check_dir() {
-#     dir_var="${1}"
-#     dir="--UNDEFINED--"
-#     eval "dir=\$$1"
-#     dir_rel="$(realpath -m --relative-to "${ROOT}" "${dir}")"
-#     # # ${HOME_DIR} and XDG dirs has to be child of ${ROOT} in TEST
-#     case "${dir_rel}" in
-#         _build/test/*)
-#             ;;
-#         *)
-#             if [ ! -z "${TEST_ONLY}" ]; then
-#                 msg_error "lib_dotfiles:init_safety_dir" "Bad ${dir_var}: '${dir}'"
-#                 exit 1
-#             else
-#                 true # TODO get confirmation for user
-#             fi
-#             ;;
-#     esac
-# }
-
-safety_check() {
-    # If test-only is ON, enforce that
-    if [ ! -z "${TEST_ONLY}" ] && [ "${PROFILE}" != "test" ]; then
-        msg_error "lib_dotfiles:init_safety" "Only tests are allowed"
-        exit 1
-    fi
-    # # ${ROOT} (that is $(pwd) in fact) has to be a dir with a cloned project
-    # if [ "$(cd "${ROOT}" && git config --get remote.origin.url)" != "git@github.com:sokhouw/dotfiles" ]; then
-    #     msg_error "lib_dotfiles:init_safety" "Allowed only in root dir of this project"
-    #     exit 1
-    # fi
-    # safety_check_dir "HOME_DIR"
-    # safety_check_dir "CONFIG_HOME"
-    # safety_check_dir "DATA_HOME"
-    # safety_check_dir "STATE_HOME"
-    # safety_check_dir "CACHE_HOME"
 }
 
 init() {
     parse_cmdline "$@"
-    show_progress
     init_dirs
     init_variables
-    export_variables
-    safety_check
 }

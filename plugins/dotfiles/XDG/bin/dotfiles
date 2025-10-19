@@ -1,22 +1,12 @@
 # shellcheck shell=sh source=/dev/null
 
-if [ ! -f "${1}" ]; then
-    exit 1
-fi
+. "${DOTFILES_INFO_FILE}"
 
-show_plugin_dir() {
-    if [ -d "${2}" ]; then
-        echo "${1}=\"${2}\""
-    fi
-}
-
-. "${1}"
-
-case "${2}" in
+case "${1}" in
     version)
         echo "dotfiles-${DOTFILES_VERSION}"
         ;;
-    show-plugins)
+    plugins)
         for plugin in ${DOTFILES_PLUGINS}; do
             echo "==== PLUGIN ${plugin}"
             show_plugin_dir "CONFIG" "${DOTFILES_CONFIG_HOME}/${plugin}"
