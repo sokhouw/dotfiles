@@ -3,17 +3,6 @@
 . "${DOTFILES_INFO_FILE}"
 
 case "${1}" in
-    version)
-        echo "dotfiles-${DOTFILES_VERSION}"
-        ;;
-    plugins)
-        for plugin in ${DOTFILES_PLUGINS}; do
-            echo "==== PLUGIN ${plugin}"
-            show_plugin_dir "CONFIG" "${DOTFILES_CONFIG_HOME}/${plugin}"
-            show_plugin_dir "SHARE" "${DOTFILES_DATA_HOME}/${plugin}"
-            show_plugin_dir "STATE" "${DOTFILES_STATE_HOME}/${plugin}"
-        done
-        ;;
     show-install)
         cat "${DOTFILES_INSTALL_FILE}"
         ;;
@@ -24,9 +13,10 @@ case "${1}" in
         ${DOTFILES_UNINSTALL_FILE}
         ;;
     *)
+        echo "version: ${DOTFILES_VERSION}"
+        echo "plugins: ${DOTFILES_PLUGINS}"
         cmds=$(grep "    [a-z\-]\+)" "${0}" | sed "s/^    //" | sed "s/)\$//" | tr '\n' '|' | sed "s/|$//")
-        echo "dotfiles-${DOTFILES_VERSION}"
         echo "usage:"
-        echo "  dotfiles ${cmds}"
+        echo "  dotfiles [${cmds}]"
         ;;
 esac

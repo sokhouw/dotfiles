@@ -1,53 +1,95 @@
-RED := \033[1;31m
-RESET := \033[0;m
+# ------------------------------------------------------------------------------
+#  arguments
+# ------------------------------------------------------------------------------
 
-ifndef plugin
-	all_plugins := $(strip dotfiles $(sort $(filter-out dotfiles,$(notdir $(wildcard plugins/*)))))
+ifndef plugins
+plugins2 := $(notdir $(wildcard plugins/*))
 else
 coma := ,
-	all_plugins := $(strip dotfiles $(filter-out dotfiles,$(subst $(coma), ,$(plugins))))
+plugins2 := $(subst $(coma), ,$(plugins))
+endif
+all_plugins := $(strip dotfiles $(sort $(filter-out dotfiles,$(plugins2))))
+
+args := --plugins "$(all_plugins)"
+
+ifdef plugin
+args += --plugin "$(plugin)"
 endif
 
-ifdef test
-	test_arg := --test $(test)
-	app_tests := $(test)
-else
-	app_tests := $(sort $(notdir $(wildcard test/app/*)))
+ifdef home
+args += --home "$(home)"
 endif
 
-ifeq "$(dryrun)" "1"
-	dryrun_arg := --dry-run
-endif
-
-ifeq "$(debug)" "1"
-	debug_arg := --debug
-endif
-
-all_args := $(test_arg) $(debug_arg) $(dryrun_arg)
+DOTFILES_DIR := $(CURDIR)
+DOTFILES := ./dotfiles.sh
 
 # ------------------------------------------------------------------------------
-#  user land - install
+#  user land - install/unnstall/clean
 # ------------------------------------------------------------------------------
 
-install: -install-prepare -install-plugins -install-commit
-
--install-prepare:
-	scripts/make-app.sh prepare $(all_args) --plugins "$(all_plugins)"
-
--install-plugins: $(addprefix -install-plugin-,$(all_plugins)) -install-commit
-
--install-plugin-%:
-	scripts/make-app.sh install-plugin $(all_args) --plugin $*
-
--install-commit:
-	scripts/make-app.sh commit $(all_args)
-
-# ------------------------------------------------------------------------------
-#  user land - uninstall
-# ------------------------------------------------------------------------------
+install: 
+	$(DOTFILES) install $(args)
 
 uninstall:
-	scripts/make-app.sh uninstall $(all_args)
+	$(DOTFILES) uninstall $(args)
+
+# ------------------------------------------------------------------------------
+#  dev land - tests
+# ------------------------------------------------------------------------------
+
+RED := \033[1;31m
+GREEN := \033[1;32m
+BLUE := \033[1;34m
+RESET := \033[0;m
+
+.SECONDEXPANSION:
+
+test-%: test-%-prep test-%-install test-%-usage test-%-uninstall test-%-verify
+	@true
+
+test-%-prep: 
+	@printf '$(BLUE)==> TEST $*/prep$(RESET)\n'
+	rm -rf _build/test/$*
+	mkdir -p _build/test/$*/HOME
+	cp -a test/$*/HOME/. _build/test/$*/HOME
+
+test-%-install:
+	@printf '$(BLUE)==> TEST $*/install$(RESET)\n'
+	$(DOTFILES) install $(args) --home "_build/test/$*/HOME" --journal "_build/test/$*/journal"
+
+test-%-usage:
+	@if [ -x "test/$*/test-runner.sh" ]; then \
+	    printf '$(BLUE)==> TEST $*/usage$(RESET)\n'; \
+	    ( cd _build/test/$*/HOME ; $(DOTFILES_DIR)/test/$*/test-runner.sh changes-dotfiles ); \
+ 	fi
+
+test-%-uninstall:
+	@printf '$(BLUE)==> TEST $*/uninstall$(RESET)\n'
+	$(DOTFILES) uninstall $(args) --home "_build/test/$*/HOME" --journal "_build/test/$*/journal"
+
+test-%-verify:
+	@printf '$(BLUE)==> TEST $*/verify$(RESET)\n'
+	@if diff -qr test/$*/HOME _build/test/$*/HOME; then \
+	    touch _build/test/$*/result.pass; \
+	    printf '$(BLUE)==> TEST $*: $(GREEN)PASS$(RESET)\n'; \
+	else \
+	    touch _build/test/$*/result.fail; \
+	    printf '$(BLUE)==> TEST $*: $(RED)FAIL$(RESET)\n'; \
+	fi
+
+test: $(addprefix test-,$(notdir $(wildcard test/*))) report
+
+report-header:
+	@printf '$(BLUE)==> TEST REPORT$(RESET)\n'
+
+report: report-header $(addprefix report-,$(notdir $(wildcard test/*)))
+
+report-%:
+	@if [ -f "_build/test/$*/result.pass" ]; then \
+	    printf 'test $*: $(GREEN)PASS$(RESET)\n'; \
+	else \
+	    printf 'test $*: $(RED)FAIL$(RESET)\n'; \
+	fi
 
 # ------------------------------------------------------------------------------
 #  developer land - shellcheck
@@ -59,39 +101,3 @@ shellcheck:
 shellcheck-%:
 	@echo $*
 	shellcheck $*
-
-# ------------------------------------------------------------------------------
-#  developer land - test-install
-# ------------------------------------------------------------------------------
-
-test: test-install test-uninstall test-verify
-
-test-install: $(addprefix test-install-,$(app_tests))
-
-test-uninstall: $(addprefix test-uninstall-,$(app_tests))
-
-test-verify: $(addprefix test-verify-,$(app_tests))
-
-test-install-%: 
-	mkdir -p _build/test/app/
-	cp -a test/app/$*/HOME/. _build/test/app/$*
-	$(MAKE) install debug=$(debug) dryrun=$(dryrun) test="$*"
-	@if [ -x "test/app/$*/test-runner.sh" ]; then \
-	    ( cd _build/test/app/$* ; ../../../../test/app/$*/test-runner.sh after-install ); \
-	fi
-
-test-uninstall-%:
-	$(MAKE) uninstall debug=$(debug) dryrun=$(dryrun) test="$*"
-
-test-verify-%:
-	@if [ -x "test/app/$*/test-runner.sh" ]; then \
-	    ( cd _build/test/app/$* ; ../../../../test/app/$*/test-runner.sh before-verify ); \
-	fi
-	@printf "$(RED)"; if ! diff -qr test/app/$*/HOME _build/test/app/$*; then printf "$(RESET)"; exit 1; fi; printf "$(RESET)"
-
-# ------------------------------------------------------------------------------
-#  developer land
-# ------------------------------------------------------------------------------
-
-clean:
-	rm -rf _build

@@ -10,7 +10,7 @@ action "create info file \"${DOTFILES_INFO_FILE}\"" \
 action "info - DOTFILES_VERSION" \
        "echo \"DOTFILES_VERSION=${version}\" >> \"${DOTFILES_INFO_FILE}\""
 
-for var in UNINSTALL_FILE BIN_HOME CONFIG_HOME DATA_HOME STATE_HOME ALL_PLUGINS; do
+for var in UNINSTALL_FILE BIN_HOME CONFIG_HOME DATA_HOME STATE_HOME PLUGINS; do
     eval value="\$${var}"
     action "info - DOTFILES_${var}" \
            "echo \"DOTFILES_${var}='${value}'\" >> \"${DOTFILES_INFO_FILE}\""
