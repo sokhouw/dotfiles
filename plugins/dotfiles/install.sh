@@ -1,4 +1,4 @@
-# sellsheck shell=sh
+#!/bin/sh
 
 version=$(git describe --tags --dirty --always 2>/dev/null || echo "unknown")
 DOTFILES_INFO_FILE="${CONFIG_HOME}/${PLUGIN}/info"
@@ -13,7 +13,7 @@ action "info - DOTFILES_VERSION" \
 for var in UNINSTALL_FILE BIN_HOME CONFIG_HOME DATA_HOME STATE_HOME PLUGINS; do
     eval value="\$${var}"
     action "info - DOTFILES_${var}" \
-           "echo \"DOTFILES_${var}='${value}'\" >> \"${DOTFILES_INFO_FILE}\""
+           "echo \"DOTFILES_${var}='${value:?}'\" >> \"${DOTFILES_INFO_FILE}\""
 done
 
 action "set info file" \

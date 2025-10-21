@@ -1,4 +1,4 @@
-# sellsheck shell=sh
+#!/bin/sh
 
 backup_move "${HOME_DIR}/.tmux.conf"
 action "Soft-linking .tmux.conf" \

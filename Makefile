@@ -91,13 +91,12 @@ report-%:
 	    printf 'test $*: $(RED)FAIL$(RESET)\n'; \
 	fi
 
+clean:
+	rm -rf _build
+
 # ------------------------------------------------------------------------------
 #  developer land - shellcheck
 # ------------------------------------------------------------------------------
 
 shellcheck:
-	@if shellcheck $$(grep -Rl "^# shellcheck" .); then echo "ok"; fi
-
-shellcheck-%:
-	@echo $*
-	shellcheck $*
+	shellcheck dotfiles.sh $(shell find -name "*.sh")
