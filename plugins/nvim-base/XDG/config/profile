@@ -1,3 +1,0 @@
-# shellcheck shell=sh
-
-alias nvim-base='NVIM_APPNAME=nvim-base nvim'

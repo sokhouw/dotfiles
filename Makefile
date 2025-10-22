@@ -3,12 +3,11 @@
 # ------------------------------------------------------------------------------
 
 ifndef plugins
-plugins2 := $(notdir $(wildcard plugins/*))
+all_plugins := $(notdir $(wildcard plugins/*))
 else
 coma := ,
-plugins2 := $(subst $(coma), ,$(plugins))
+all_plugins := $(subst $(coma), ,$(plugins))
 endif
-all_plugins := $(strip dotfiles $(sort $(filter-out dotfiles,$(plugins2))))
 
 args := --plugins "$(all_plugins)"
 
@@ -53,9 +52,9 @@ test-%-prep:
 	mkdir -p _build/test/$*/HOME
 	cp -a test/$*/HOME/. _build/test/$*/HOME
 
-test-%-install:
+test-%-install: test-%-prep
 	@printf '$(BLUE)==> TEST $*/install$(RESET)\n'
-	$(DOTFILES) install $(args) --home "_build/test/$*/HOME" --journal "_build/test/$*/journal"
+	$(DOTFILES) install $(args) --home "_build/test/$*/HOME"
 
 test-%-usage:
 	@if [ -x "test/$*/test-runner.sh" ]; then \
@@ -65,7 +64,7 @@ test-%-usage:
 
 test-%-uninstall:
 	@printf '$(BLUE)==> TEST $*/uninstall$(RESET)\n'
-	$(DOTFILES) uninstall $(args) --home "_build/test/$*/HOME" --journal "_build/test/$*/journal"
+	$(DOTFILES) uninstall $(args) --home "_build/test/$*/HOME"
 
 test-%-verify:
 	@printf '$(BLUE)==> TEST $*/verify$(RESET)\n'

@@ -1,6 +1,0 @@
-require("base/clipboard")
-require("base/colorscheme")
-require("base/diagnostic")
-require("base/filetypes")
-require("base/lsp")
-require("base/options")

@@ -1,0 +1,3 @@
+# shellcheck shell=sh
+
+alias vim='vim -u ~/.config/vim/vimrc'

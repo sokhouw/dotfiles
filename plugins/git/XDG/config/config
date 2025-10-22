@@ -2,17 +2,15 @@
     email = marcin.sokolowski@gmail.com
     name = sokhouw
 [core]
-    eitor = nvim-main
+    eitor = vim
     pager = cat
 [diff]
-    tool = nvimdiff
-[difftool "nvimdiff"]
-    cmd = "APPNAME=nvim-main nvim -d \"$LOCAL\" \"$REMOTE\""
+    tool = vimdiff
 [difftool]
     prompt = false
 [mergetool]
     prompt = false
 [format]
-    pretty = format:%C(bold yellow)%h%C(reset) %C(green)%cr%C(reset)%x09 %C(blue)%an%C(reset): %s%C(auto)%d%C(reset)
+    pretty = format:%C(bold yellow)%h%C(reset) (green)%cr%C(reset)%x09 %C(blue)%an%C(reset): %s%C(auto)%d%C(reset)
 [pager]
     log = cat && echo

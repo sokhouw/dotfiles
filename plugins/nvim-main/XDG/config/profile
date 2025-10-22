@@ -1,4 +1,0 @@
-# shellcheck shell=sh
-
-alias nvim-main='NVIM_APPNAME=nvim-main nvim'
-alias vv='nvim-main'

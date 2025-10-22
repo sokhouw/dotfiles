@@ -1,0 +1,72 @@
+" --- Make sure runtimepath and packpath include your XDG dirs
+set runtimepath^=~/.config/vim
+set runtimepath+=~/.local/share/vim
+set packpath=~/.local/share/vim
+" --- Paths for temp files (XDG cache) --------------------------
+set backupdir=~/.cache/vim/backup/
+set directory=~/.cache/vim/swap/
+set undodir=~/.cache/vim/undo/
+set undofile
+
+" --- vim-plug bootstrap ----------------------------------------
+if empty(glob('~/.config/vim/autoload/plug.vim'))
+  silent !curl -fLo ~/.config/vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+  autocmd VimEnter * PlugInstall --sync | source ~/.config/vim/vimrc
+endif
+
+" --- Plugins ---------------------------------------------------
+call plug#begin('~/.local/share/vim/plugged')
+
+Plug 'sainnhe/everforest'
+Plug 'romainl/Apprentice'
+Plug 'Rigellute/shades-of-purple.vim'
+Plug 'bluz71/vim-moonfly-colors'
+Plug 'bluz71/vim-nightfly-colors'
+Plug 'morhetz/gruvbox'
+Plug 'arcticicestudio/nord-vim'
+Plug 'NLKNguyen/papercolor-theme'
+
+call plug#end()
+
+" --- Colorscheme -----------------------------------------------
+silent! colorscheme habamax
+
+" --- File handling ---------------------------------------------
+set nocompatible
+filetype plugin indent on
+syntax on
+
+" --- UI tweaks -------------------------------------------------
+set nowrap
+set number
+set relativenumber
+set ruler
+set cursorline
+set scrolloff=4
+set termguicolors
+set signcolumn=yes
+set showcmd
+set showmode
+set hidden
+set laststatus=2
+set background=dark
+
+" --- Tabs vs spaces --------------------------------------------
+set softtabstop=4
+set shiftwidth=4
+set expandtab
+
+" --- Encoding --------------------------------------------------
+set encoding=utf-8
+set fileencodings=utf-8
+
+" --- Diff ------------------------------------------------------
+
+if &diff
+silent! colorscheme nord
+else
+set norelativenumber
+set scrolloff=0
+endif
+
+

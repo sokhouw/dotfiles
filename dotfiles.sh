@@ -7,17 +7,11 @@
 RED=$(printf '\033[1;31m')
 GREEN=$(printf '\033[1;32m')
 BLUE=$(printf '\033[1;34m')
-#YELLOW=$(printf '\033[1;33m')
-# GREY=$(printf '\033[1;30m')
 RESET=$(printf '\033[0;m')
 
 # ------------------------------------------------------------------------------
-# Utils
+# actions
 # ------------------------------------------------------------------------------
-
-timestamp() {
-    date +'%Y%m%d_%H%M%S'
-}
 
 execute() {
     if result=$(eval "$* 2>&1"); then
@@ -26,10 +20,6 @@ execute() {
         printf '%s %s%s%s\n' "$*" "${RED}" "${result}" "${RESET}"
         exit 1
     fi
-}
-
-header() {
-    printf '%s==> %s%s\n' "${BLUE}" "$@" "${RESET}"
 }
 
 run_script() {
@@ -41,7 +31,15 @@ run_script() {
     fi
 }
 
-run_actions() {
+header() {
+    printf '%s==> %s%s\n' "${BLUE}" "$@" "${RESET}"
+}
+
+timestamp() {
+    date +'%Y%m%d_%H%M%S'
+}
+
+run_install_actions() {
     tmp_uninstall_file="tmp_uninstall.sh"
     a_plugin=
     a_descr=
@@ -98,6 +96,53 @@ run_actions() {
     rm "${tmp_uninstall_file}"
 }
 
+init_action() {
+    eval "${3}"
+    eval "${2}"
+    {
+        echo "descr:dotfiles:${1}"
+        echo "uninstall:dotfiles:${3}"
+        echo
+    } >> "${JOURNAL_FILE}"
+}
+
+action() {
+    if ! grep "^descr:.*:${1}\$" "${JOURNAL_FILE}" 1>/dev/null 2>/dev/null; then
+        {
+            echo "descr:${PLUGIN}:${1}"
+            if [ ! -z "${2}" ]; then
+                echo "install:${PLUGIN}:${2}"
+            fi
+            if [ ! -z "${3}" ]; then
+                echo "uninstall:${PLUGIN}:${3}"
+            fi
+            echo
+        } >> "${JOURNAL_FILE}"
+    fi
+}
+
+backup_copy() {
+    do_backup "${1}" "cp -r"
+}
+
+backup_move() {
+    do_backup "${1}" "mv"
+}
+
+do_backup() {
+    orig_path="${1}"
+    backup_cmd="${2}"
+    action_descr="backing up '${orig_path}'"
+    if [ -e "${orig_path}" ]; then
+        backup_path="${BACKUP_DIR}/$(echo "${orig_path}" | sed "s|${HOME_DIR}/||")"
+        mkdir -p "$(dirname "${backup_path}")"
+        action "${action_descr}" \
+            "${backup_cmd} \"${orig_path}\" \"${backup_path}\"" \
+            "rm -rf \"${orig_path}\" && mv \"${backup_path}\" \"${orig_path}\""
+    fi
+}
+
+
 # ------------------------------------------------------------------------------
 # command line
 # ------------------------------------------------------------------------------
@@ -114,10 +159,6 @@ parse_cmdline() {
                 ;;
             --home)
                 HOME_DIR="${2}"
-                shift 2
-                ;;
-            --journal)
-                JOURNAL_FILE="${2}"
                 shift 2
                 ;;
             *)
@@ -161,51 +202,14 @@ init_variables() {
     else
         CACHE_HOME="${XDG_CACHE_HOME}"
     fi
-    if [ -z "${JOURNAL_FILE}" ]; then
-        JOURNAL_FILE="_build/journal"
-    fi
-    UNINSTALL_FILE="${CONFIG_HOME}/dotfiles/uninstall.sh"
+    JOURNAL_FILE="${CACHE_HOME}/dotfiles/journal"
+    BACKUP_DIR="${CACHE_HOME}/dotfiles/backup"
+    UNINSTALL_FILE="${CACHE_HOME}/dotfiles/uninstall.sh"
     PROFILE_FILE="${HOME_DIR}/.bashrc"
-    export COMMAND
-    export HOME_DIR
+    export HOME_DIR BACKUP_DIR
     export BIN_HOME CONFIG_HOME DATA_HOME STATE_HOME CACHE_HOME
-    export JOURNAL_FILE UNINSTALL_FILE PROFILE_FILE
+    export JOURNAL_FILE BACKUP_FILE UNINSTALL_FILE PROFILE_FILE
     export PLUGINS
-}
-
-action() {
-    if ! grep "^descr:.*:${1}\$" "${JOURNAL_FILE}" 1>/dev/null 2>/dev/null; then
-        {
-            echo "descr:${PLUGIN}:${1}"
-            if [ ! -z "${2}" ]; then
-                echo "install:${PLUGIN}:${2}"
-            fi
-            if [ ! -z "${3}" ]; then
-                echo "uninstall:${PLUGIN}:${3}"
-            fi
-            echo
-        } >> "${JOURNAL_FILE}"
-    fi
-}
-
-backup_copy() {
-    do_backup "${1}" "cp -r"
-}
-
-backup_move() {
-    do_backup "${1}" "mv"
-}
-
-do_backup() {
-    orig_path="${1}"
-    backup_cmd="${2}"
-    action_descr="backing up '${orig_path}'"
-    if [ -e "${orig_path}" ]; then
-        backup_path="${1}.bak.$(timestamp)"
-        action "${action_descr}" \
-            "${backup_cmd} \"${orig_path}\" \"${backup_path}\"" \
-            "rm -rf \"${orig_path}\" && mv \"${backup_path}\" \"${orig_path}\""
-    fi
 }
 
 dotfiles_source_file() {
@@ -280,16 +284,26 @@ init_variables
 
 case "${COMMAND}" in
     install)
-        if [ ! -e "${CONFIG_HOME}/dotfiles" ]; then
-            mkdir -p "$(dirname "${JOURNAL_FILE}")" && rm -f "${JOURNAL_FILE}"
+        if [ ! -e "${CACHE_HOME}/dotfiles" ] && [ ! -e "${CONFIG_HOME}/dotfiles" ]; then
+            header "preparing install actions"
+            VERSION="$(git describe --tags --dirty --always 2>/dev/null || echo unknown)"
+            init_action "init dotfiles cache" \
+                        "mkdir -p '${CACHE_HOME}/dotfiles/backup'" \
+                        "rm -rf '${CACHE_HOME}/dotfiles'"
+            init_action "init dotfiles config" \
+                        "mkdir -p '${CONFIG_HOME}/dotfiles'" \
+                        "rm -rf '${CONFIG_HOME}/dotfiles'"
+            for name in VERSION UNINSTALL_FILE BIN_HOME CONFIG_HOME DATA_HOME STATE_HOME PLUGINS; do
+                eval "value=\"\$${name}\""
+                echo "${name}='${value}'" >> "${CONFIG_HOME}/dotfiles/info"
+            done
         else
             printf '%s%s%s\n' "${RED}" "Dotfiles already installed." "${RESET}" && exit 1
         fi
 
-        header "Preparing install & uninstall actions"
         for PLUGIN in ${PLUGINS}; do
             PLUGIN_DIR="plugins/${PLUGIN}"
-            echo "==> ${PLUGIN} install actions: default"
+            header "preparing install actions - ${PLUGIN} - default"
             dotfiles_install_xdg_dir "${PLUGIN_DIR}/XDG/config" "${CONFIG_HOME}/${PLUGIN}"
             dotfiles_install_xdg_dir "${PLUGIN_DIR}/XDG/share" "${DATA_HOME}/${PLUGIN}"
             dotfiles_install_xdg_dir "${PLUGIN_DIR}/XDG/state" "${STATE_HOME}/${PLUGIN}"
@@ -297,17 +311,17 @@ case "${COMMAND}" in
             dotfiles_install_xdg_files "${PLUGIN_DIR}/XDG/bin" "${BIN_HOME}"
             dotfiles_source_file "${PLUGIN_DIR}/XDG/config/profile" "${CONFIG_HOME}/${PLUGIN}/profile" "${PROFILE_FILE}"
             if [ -x "${PLUGIN_DIR}/install.sh" ]; then
-                echo "==> ${PLUGIN} install actions: '${PLUGIN_DIR}/install.sh'" 
+                header "preparing install actions - ${PLUGIN} - '${PLUGIN_DIR}/install.sh'" 
                 if ! . "${PLUGIN_DIR}/install.sh"; then
                     exit 1
                 fi
             fi
         done
 
-        header "Running install actions"
-        run_actions "${JOURNAL_FILE}"
+        header "running install actions"
+        run_install_actions "${JOURNAL_FILE}"
 
-        header "Running postinstall scripts"
+        header "running postinstall scripts"
         for PLUGIN in ${PLUGINS}; do
             PLUGIN_DIR="plugins/${PLUGIN}"
             postinstall_file="${PLUGIN_DIR}/postinstall.sh"
@@ -322,7 +336,6 @@ case "${COMMAND}" in
             fi
         done
         ;;
-
     uninstall)
         if [ -x "${UNINSTALL_FILE}" ]; then
             run_script "${UNINSTALL_FILE}"
