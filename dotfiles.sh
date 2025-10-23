@@ -212,33 +212,30 @@ init_variables() {
     export PLUGINS
 }
 
-dotfiles_source_file() {
-    source_path="${1}"
-    target_path="${2}"
-    parent_path="${3}"
-    if [ -f "${source_path}" ]; then
-        if [ ! -f "${parent_path}" ]; then
-            action "clean up \"${parent_path}\"" \
+install_profile() {
+    if [ -f "${PLUGIN_DIR}/XDG/config/profile" ]; then
+        if [ ! -f "${PROFILE_FILE}" ]; then
+            action "clean up \"${PROFILE_FILE}\"" \
                    "" \
-                   "[ ! -s \"${parent_path}\" ] && rm \"${parent_path}\""
+                   "[ ! -s \"${PROFILE_FILE}\" ] && rm \"${PROFILE_FILE}\""
         fi
-        marker=" # dotfiles include: ${PLUGIN}"
-        action "sourcing \"${target_path}\" in \"${parent_path}\"" \
-               "echo \". ${target_path}${marker}\" >> \"${parent_path}\"" \
-               "sed -i \"/${marker}/d\" \"${parent_path}\""
+        comment="# dotfiles include: ${PLUGIN}"
+        action "source '${CONFIG_HOME}/${PLUGIN}/profile' in '${PROFILE_FILE}'" \
+               "echo '. ${CONFIG_HOME}/${PLUGIN}/profile ${comment}' >> '${PROFILE_FILE}'" \
+               "sed -i \"/${comment}/d\" \"${PROFILE_FILE}\""
     fi
 }
 
-dotfiles_init_xdg() {
+init_xdg() {
     if [ ! -e "${1}" ]; then
-        dotfiles_init_xdg "$(dirname "${1}")"
+        init_xdg "$(dirname "${1}")"
         action "init XDG dir '${1}'" \
                "mkdir '${1}'" \
                "rmdir '${1}' || true"
     fi
 }
 
-dotfiles_install_xdg_dir() {
+install_xdg_dir() {
     plugin_xdg_dir="${1}"
     target_xdg_dir="${2}"
     parent_xdg="$(dirname "${target_xdg_dir}")"
@@ -251,8 +248,8 @@ dotfiles_install_xdg_dir() {
             action "install XDG dir '${plugin_xdg_dir}'" \
                    "cp -r '${plugin_xdg_dir}' '${target_xdg_dir}'"
         else
-            # .. but target does not eist so lets create structure
-            dotfiles_init_xdg "${parent_xdg}"
+            # .. but target does not exist so lets create structure
+            init_xdg "${parent_xdg}"
             # .. and then install and remove when uninstalling
             action "install XDG dir '${plugin_xdg_dir}'" \
                    "cp -r '${plugin_xdg_dir}' '${target_xdg_dir}'" \
@@ -261,12 +258,12 @@ dotfiles_install_xdg_dir() {
     fi
 }
 
-dotfiles_install_xdg_files() {
+install_xdg_files() {
     plugin_xdg_dir="${1}"
     target_xdg_dir="${2}"
 
     if [ -e "${PLUGIN_DIR}/XDG/bin" ]; then
-        dotfiles_init_xdg "${BIN_HOME}"
+        init_xdg "${BIN_HOME}"
         for plugin_xdg_file in "${plugin_xdg_dir}"/*; do
             target_xdg_file="${target_xdg_dir}/$(basename "${plugin_xdg_file}")"
             if [ -e "${target_xdg_file}" ]; then
@@ -304,12 +301,12 @@ case "${COMMAND}" in
         for PLUGIN in ${PLUGINS}; do
             PLUGIN_DIR="plugins/${PLUGIN}"
             header "preparing install actions - ${PLUGIN} - default"
-            dotfiles_install_xdg_dir "${PLUGIN_DIR}/XDG/config" "${CONFIG_HOME}/${PLUGIN}"
-            dotfiles_install_xdg_dir "${PLUGIN_DIR}/XDG/share" "${DATA_HOME}/${PLUGIN}"
-            dotfiles_install_xdg_dir "${PLUGIN_DIR}/XDG/state" "${STATE_HOME}/${PLUGIN}"
-            dotfiles_install_xdg_dir "${PLUGIN_DIR}/XDG/cache" "${CACHE_HOME}/${PLUGIN}"
-            dotfiles_install_xdg_files "${PLUGIN_DIR}/XDG/bin" "${BIN_HOME}"
-            dotfiles_source_file "${PLUGIN_DIR}/XDG/config/profile" "${CONFIG_HOME}/${PLUGIN}/profile" "${PROFILE_FILE}"
+            install_xdg_dir "${PLUGIN_DIR}/XDG/config" "${CONFIG_HOME}/${PLUGIN}"
+            install_xdg_dir "${PLUGIN_DIR}/XDG/share" "${DATA_HOME}/${PLUGIN}"
+            install_xdg_dir "${PLUGIN_DIR}/XDG/state" "${STATE_HOME}/${PLUGIN}"
+            install_xdg_dir "${PLUGIN_DIR}/XDG/cache" "${CACHE_HOME}/${PLUGIN}"
+            install_xdg_files "${PLUGIN_DIR}/XDG/bin" "${BIN_HOME}"
+            install_profile #"${PLUGIN_DIR}/profile" "${CONFIG_HOME}/${PLUGIN}/profile" "${PROFILE_FILE}"
             if [ -x "${PLUGIN_DIR}/install.sh" ]; then
                 header "preparing install actions - ${PLUGIN} - '${PLUGIN_DIR}/install.sh'" 
                 if ! . "${PLUGIN_DIR}/install.sh"; then
@@ -319,15 +316,15 @@ case "${COMMAND}" in
         done
 
         header "running install actions"
-        run_install_actions "${JOURNAL_FILE}"
+        run_install_actions
 
         header "running postinstall scripts"
         for PLUGIN in ${PLUGINS}; do
             PLUGIN_DIR="plugins/${PLUGIN}"
-            postinstall_file="${PLUGIN_DIR}/postinstall.sh"
-            if [ -x "${postinstall_file}" ]; then
-                printf '%s%s%s %s\n' "${BLUE}" "[${PLUGIN}]" "${RESET}" "post-install script '${postinstall_file}'"
-                if . "${postinstall_file}"; then
+            postinstall="${PLUGIN_DIR}/postinstall.sh"
+            if [ -x "${postinstall}" ]; then
+                printf '%s%s%s %s\n' "${BLUE}" "[${PLUGIN}]" "${RESET}" "post-install script '${postinstall}'"
+                if . "${postinstall}"; then
                     printf '%s%s%s\n' "${GREEN}" "OK" "${RESET}"
                 else
                     printf '%s%s%s\n' "${RED}" "FAILED" "${RESET}"

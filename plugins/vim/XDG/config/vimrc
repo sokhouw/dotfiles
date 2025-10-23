@@ -17,14 +17,14 @@ endif
 " --- Plugins ---------------------------------------------------
 call plug#begin('~/.local/share/vim/plugged')
 
-Plug 'sainnhe/everforest'
-Plug 'romainl/Apprentice'
-Plug 'Rigellute/shades-of-purple.vim'
-Plug 'bluz71/vim-moonfly-colors'
-Plug 'bluz71/vim-nightfly-colors'
-Plug 'morhetz/gruvbox'
+" Plug 'sainnhe/everforest'
+" Plug 'romainl/Apprentice'
+" Plug 'Rigellute/shades-of-purple.vim'
+" Plug 'bluz71/vim-moonfly-colors'
+" Plug 'bluz71/vim-nightfly-colors'
+" Plug 'morhetz/gruvbox'
 Plug 'arcticicestudio/nord-vim'
-Plug 'NLKNguyen/papercolor-theme'
+" Plug 'NLKNguyen/papercolor-theme'
 
 call plug#end()
 
@@ -44,7 +44,7 @@ set ruler
 set cursorline
 set scrolloff=4
 set termguicolors
-set signcolumn=yes
+" set signcolumn=yes
 set showcmd
 set showmode
 set hidden
