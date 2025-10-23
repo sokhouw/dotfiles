@@ -71,7 +71,9 @@ run_install_actions() {
         else
             if [ ! -z "${a_install}" ]; then
                 printf '%s%s%s %s\n' "${BLUE}" "[${a_plugin}]" "${RESET}" "${a_descr}"
-                if result=$(eval "${a_install} 2>&1"); then
+                PLUGIN="${a_plugin}"
+                PLUGIN_DIR="plugins/${PLUGIN}"
+                if result=$(eval "${a_install} 2>&1 | tee -a /tmp/okolog"); then
                     printf '%s %s%s%s\n' "${a_install}" "${GREEN}" "OK" "${RESET}"
                     if [ ! -z "${a_uninstall}" ]; then
                         echo "${a_uninstall} # install was: [${a_plugin}] ${a_descr}" >> "${tmp_uninstall_file}"
@@ -276,6 +278,68 @@ install_xdg_files() {
     fi
 }
 
+install_tool() {
+    repo="${1}"
+    tag="${2}"
+    printf '%s[%s]%s tag=%s\n' "${BLUE}" "${repo}" "${RESET}" "${tag}"
+    OS=$(uname | tr '[:upper:]' '[:lower:]')
+    BASEARCH="$(uname -m)"
+    case "${BASEARCH}" in
+        x86_64) ARCH="x64" ;;
+        aarch64) ARCH="arm64" ;;
+        *) echo "Unsupported architecture: ${BASEARCH}"; exit 1 ;;
+    esac
+    name="$(basename "${repo}")"
+    case "${tag}" in
+        latest)
+            tagurl="https://api.github.com/repos/${repo}/releases/latest"
+            TAG=$(curl -s "${tagurl}" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+            if [ -z "${TAG}" ]; then
+                echo "Failed to get latest release from '${tagurl}'"
+                exit 1
+            fi
+            ;;
+        *)
+            TAG="${tag}"
+    esac
+    eval "archive_filename=\"${3}\""
+    path="${DATA_HOME}/${PLUGIN}/${name}-${TAG}"
+    url="https://github.com/${repo}/releases/download/${TAG}/${archive_filename}"
+    echo "URL: ${url}"
+    mkdir -p "${DATA_HOME}/${PLUGIN}"
+    if ! curl -sL -o "${DATA_HOME}/${PLUGIN}/${archive_filename}" "${url}"; then
+        echo "Failed to download ${url}"
+        exit 1
+    fi
+    case "${archive_filename}" in
+        *.tar.gz)
+            archive_basename="$(basename "${archive_filename}" ".tar.gz")"
+            mkdir -p "${DATA_HOME}/${PLUGIN}/${archive_basename}"
+            if ! tar -xzf "${DATA_HOME}/${PLUGIN}/${archive_filename}" -C "${DATA_HOME}/${PLUGIN}/${archive_basename}"; then
+                echo "Failed to uncompress"
+                exit 1
+            fi
+            mkdir -p "${BIN_HOME}"
+            ln -sf "${DATA_HOME}/${PLUGIN}/${archive_basename}${4}" "${BIN_HOME}/${name}"
+            ;;
+        *.gz)
+            archive_basename="$(basename "${archive_filename}" ".gz")"
+            if ! gzip -cd "${DATA_HOME}/${PLUGIN}/${archive_filename}" > "${DATA_HOME}/${PLUGIN}/${archive_basename}"; then
+                echo "Failed to uncompress"
+                exit 1
+            fi
+            chmod a+x "${DATA_HOME}/${PLUGIN}/${archive_basename}"
+            mkdir -p "${BIN_HOME}"
+            ln -sf "${DATA_HOME}/${PLUGIN}/${archive_basename}" "${BIN_HOME}/${name}"
+            ;;
+        *)
+            echo "Unsupportech archive: ${archive_name}";
+            exit 1
+            ;;
+    esac
+    rm "${DATA_HOME}/${PLUGIN}/${archive_filename}"
+}
+
 parse_cmdline "$@"
 init_variables
 
@@ -313,6 +377,7 @@ case "${COMMAND}" in
                     exit 1
                 fi
             fi
+            install_tools
         done
 
         header "running install actions"
