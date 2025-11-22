@@ -1,0 +1,7 @@
+{description, "CT suite"}.
+{variables, [
+    {name, "", "Name of the suite"},
+    {app_dir, ".", "Application directory"}
+  ]}.
+{dir, "{{app_dir}}/test"}.
+{template, "ct.erl", "{{app_dir}}/test/{{name}}_SUITE.erl"}.

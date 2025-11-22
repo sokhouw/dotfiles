@@ -1,0 +1,6 @@
+{description, "rebar.config"}.
+{variables, [
+    {name, "", "Application name"}
+]}.
+{dir, "."}.
+{template, "rebar.config", "rebar.config"}.
