@@ -22,65 +22,16 @@ That was exactly what I needed.
 
 ## Installation
 
-### Clone bare repo
-
 ```shell
 git clone --bare https://github.com/sokhouw/dotfiles/ $HOME/.dotfiles
+git --git-dir=$HOME/.dotfiles --work-tree=$HOME checkout .dotfiles/install.sh
+source ./dotfiles/install.sh
 ```
-
-### Modify ~/.bashrc
-
-```shell
-cat >> $HOME/.bashrc <<- "EOF"
-alias dotfiles="git --git-dir=$HOME/.dotfiles --work-tree=$HOME"
-alias dfg=dotfiles
-alias dfg-tree="dfg ls-files | tree --fromfile ."
-alias dfg-other="dfg ls-files --other"
-EOF
-source $HOME/.bashrc
-echo "*" > $HOME/.gitignore
-```
-
-### Start tracking files in $HOME dir
-
-```shell
-dfg checkout
-```
-
-Step above might fail woth a message like that:
-
-```shell
-error: The following untracked working tree files would be overwritten by checkout:
-        .vimrc
-Please move or remove them before you switch branches.
-Aborting
-```
-
-In such case create backup of these files:
-
-```shell
-for f in $(dfg checkout 2>&1 | grep -E "^\s" | sed "s/\s\+//"); do 
-    [ ! -d "$HOME/.dotfiles-backup/$(dirname $f)" ] && mkdir -p "$HOME/.dotfiles-backup/$(dirname $f)" 
-    mv $HOME/$f $HOME/.dotfiles-backup/$f
-done
-```
-
-and run `dfg checkout` command again.
 
 ## De-Installation
 
-### Remove all tracked files
-
 ```shell
-dfg ls-files | xargs rm -f
-```
-
-### Bring back backup dotfiles
-
-```
-for f in $(find $HOME/.dotfiles-backup -mindepth 1); do 
-    mv $f $HOME/$(realpath -s --relative-to="$HOME/.dotfiles-backup" $f); 
-done;
+./dotfiles/uninstall.sh
 ```
 
 ## Usage
