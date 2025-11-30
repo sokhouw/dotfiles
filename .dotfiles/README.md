@@ -23,8 +23,8 @@ That was exactly what I needed.
 ## Installation
 
 ```shell
-git clone --bare https://github.com/sokhouw/dotfiles/ $HOME/.dotfiles
-git --git-dir=$HOME/.dotfiles --work-tree=$HOME checkout .dotfiles/install.sh
+git clone --bare https://github.com/sokhouw/dotfiles/ $HOME/.dotfiles/repo
+git --git-dir=$HOME/.dotfiles/repo --work-tree=$HOME checkout .dotfiles/install.sh
 source ./dotfiles/install.sh
 ```
 
