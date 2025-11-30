@@ -7,3 +7,4 @@ if ! dfg checkout; then
     done
     dfg checkout
 fi
+echo "*" > $HOME/.gitignore
