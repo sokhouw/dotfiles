@@ -33,8 +33,15 @@ for f in $(dfg diff --name-status --no-color --no-renames main | grep --colour=n
 done
 dfg checkout .
 echo "*" > $HOME/.gitignore
-rm $HOME/README.md
 ```
+
+### in a nutshell
+
+1. Clones bare sokhouw/dotfiles repo
+2. Sets up dfg alias to work with dotfiles
+3. Backup conflicting files
+4. Checkout dotfiles (creates dotfiles in $HOME)
+5. Have "\*" in .gitignore so that each new dotfile has to be added forcibly (-f git flag)
 
 ## Uninstallation
 
@@ -51,6 +58,15 @@ rm $HOME/.gitignore
 sed -i "/^alias dfg=/d" $HOME/.bashrc
 unalias dfg
 ```
+
+### In a nutshell
+
+1. Remove all dotfiles 
+2. Remove all empty dotfiles dirs
+3. Resore backed up files
+4. Remove .dotfiles and .gitignore
+5. Restore .bashrc
+6. Remove dfg alias
 
 ## Usage
 
@@ -78,4 +94,3 @@ dfg ls-files --others | tree --fromfile
 ```shell
 dfg ls-files | tree --fromfile
 ```
-
