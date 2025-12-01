@@ -8,7 +8,8 @@ This repo primarily covers Vim/Neovim, tmux, rebar3 templates, shell environment
 1. [Inspiration](#inspiration)
 2. [Installation](#installation)
 3. [Uninstallation](#uniinstallation)
-3. [Usage](#usage)
+4. [Usage](#usage)
+5. [Contributing](#contributing)
 
 ## Inspiration
 
@@ -22,17 +23,29 @@ That was exactly what I needed.
 
 ## Installation
 
+Copy and run script below. Update values of DOTFILES\_DIR and DOTFILES\_BRANCH when needed.
+
 ```shell
-git clone --bare https://github.com/sokhouw/dotfiles/ $HOME/.dotfiles
-echo 'alias dfg="git --git-dir=$HOME/.dotfiles --work-tree=$HOME"' >> $HOME/.bashrc
+DOTFILES_DIR=$HOME/.dotfiles
+DOTFILES_BRANCH=main
+git clone --bare -b $BRANCH https://github.com/sokhouw/dotfiles/ $DOTFILES_DIR
+echo "alias dfg=\"git --git-dir=$DOTFILES_DIR --work-tree=\$HOME\"" >> $HOME/.bashrc
 source $HOME/.bashrc
 dfg reset
 for f in $(dfg diff --name-status --no-color --no-renames main | grep --colour=never "^M" | sed "s/\s\+/:/" | cut -c3-); do
-    [ ! -d "$HOME/.dotfiles/backup/$(dirname $f)" ] && mkdir -p "$HOME/.dotfiles/backup/$(dirname $f)" 
-    mv $HOME/$f $HOME/.dotfiles/backup/$f
+    [ ! -d "$DOTFILES_DIR/backup/$(dirname $f)" ] && mkdir -p "$DOTFILES_DIR/backup/$(dirname $f)" 
+    mv $HOME/$f $DOTFILES_DIR/backup/$f
 done
 dfg checkout .
 echo "*" > $HOME/.gitignore
+```
+
+In case only parts of the repo are needed, it is possible to checkout only some files.
+
+Below sample if all is needed is NeoVim config
+
+```shell
+dfg checkout .config/nvim 
 ```
 
 ### in a nutshell
@@ -45,15 +58,18 @@ echo "*" > $HOME/.gitignore
 
 ## Uninstallation
 
+Copy and run script below. Update values of DOTFILES\_DIR when needed.
+
 ```shell
+DOTFILES_DIR=$HOME/.dotfiles
 dfg ls-files | xargs rm -f
 dfg ls-tree --name-only -d -r main | sort -r | xargs -I{} rmdir {} 2>/dev/null
-for f in $(find $HOME/.dotfiles/backup -type f 2>/dev/null); do 
-    t=$(realpath -s --relative-to="$HOME/.dotfiles/backup" $f)
+for f in $(find $DOTFILES_DIR/backup -type f 2>/dev/null); do 
+    t=$(realpath -s --relative-to="$DOTFILES_DIR/backup" $f)
     [ ! -d "$HOME/$(dirname $t)" ] && mkdir -p "$HOME/$(dirname $t)"
     mv $f $HOME/$t
 done
-rm -rf $HOME/.dotfiles
+rm -rf $DOTFILES_DIR
 rm $HOME/.gitignore
 sed -i "/^alias dfg=/d" $HOME/.bashrc
 unalias dfg
@@ -93,4 +109,20 @@ dfg ls-files --others | tree --fromfile
 
 ```shell
 dfg ls-files | tree --fromfile
+```
+
+## Contributing
+
+### Working with branches
+
+Default branch is main. To keep other branches up-to-date with main use rebase.
+
+In case branch \<BRANCH\_NAME\> needs a rebae:
+
+```shell
+dfg checkout main
+dfg pull
+dfg checkout -
+dfg pull --rebase origin main
+dfg push origin <BRANCH_NAME> -f
 ```
