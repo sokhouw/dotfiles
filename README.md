@@ -6,10 +6,11 @@ This repo primarily covers Vim/Neovim, tmux, rebar3 templates, shell environment
 ## Table of Contents
 
 1. [Inspiration](#inspiration)
-2. [Installation](#installation)
-3. [Uninstallation](#uniinstallation)
-4. [Usage](#usage)
-5. [Contributing](#contributing)
+2. [Install](#install)
+3. [Adapt](#adapt)
+5. [Use](#use)
+6. [Contribute](#contribute)
+4. [Uninstall](#uniinstalln)
 
 ## Inspiration
 
@@ -21,7 +22,9 @@ This was apparently inspired by a [Hacker News thread](https://news.ycombinator.
 
 That was exactly what I needed.
 
-## Installation
+## Install
+
+### Full install 
 
 Copy and run script below. Update values of DOTFILES\_DIR and DOTFILES\_BRANCH when needed.
 
@@ -56,7 +59,64 @@ dfg checkout .config/nvim
 4. Checkout dotfiles (creates dotfiles in $HOME)
 5. Have "\*" in .gitignore so that each new dotfile has to be added forcibly (-f git flag)
 
-## Uninstallation
+## Adapt
+
+See [lua/lsp.lua] and follow instructions to manually setup some LSP. Mason is not ideal for Erlang.
+Any LSP that is not handled by Mason will need to be installed manually.
+
+### In a nutshell
+
+1. Remove all dotfiles 
+2. Remove all empty dotfiles dirs
+3. Resore backed up files
+4. Remove .dotfiles and .gitignore
+5. Restore .bashrc
+6. Remove dfg alias
+
+## Use
+
+dfg alias can be used as git command.
+It just adds location of the repo (--git-dir=$HOME/.dotfiles/repo) and "target dir" (--work-tree=$HOME").
+
+### Add files
+
+```shell
+dfg add -f <PATH_TO_FILE>
+dfg commit -m <COMMIT_MSG>
+dfg push
+```
+
+argument -f is really needed when adding new files becuase .gitignore contains "*"
+
+### Show untracked files in current dir
+
+```shell
+dfg ls-files --others | tree --fromfile
+```
+
+### Show all dotfiles in current dir
+
+```shell
+dfg ls-files | tree --fromfile
+```
+
+## Contribute
+
+### Branches
+
+Default branch is main. To keep other branches up-to-date with main use rebase.
+
+In case branch \<BRANCH\_NAME\> needs a rebase:
+
+```shell
+dfg checkout main
+dfg pull
+dfg checkout -
+dfg pull --rebase origin main
+dfg push origin <BRANCH_NAME> -f
+```
+
+## Uninstall
 
 Copy and run script below. Update values of DOTFILES\_DIR when needed.
 
@@ -73,56 +133,4 @@ rm -rf $DOTFILES_DIR
 rm $HOME/.gitignore
 sed -i "/^alias dfg=/d" $HOME/.bashrc
 unalias dfg
-```
-
-### In a nutshell
-
-1. Remove all dotfiles 
-2. Remove all empty dotfiles dirs
-3. Resore backed up files
-4. Remove .dotfiles and .gitignore
-5. Restore .bashrc
-6. Remove dfg alias
-
-## Usage
-
-dfg alias can be used as git command.
-It just adds location of the repo (--git-dir=$HOME/.dotfiles/repo) and "target dir" (--work-tree=$HOME").
-
-### Adding files
-
-```shell
-dfg add -f <PATH_TO_FILE>
-dfg commit -m <COMMIT_MSG>
-dfg push
-```
-
-argument -f is really needed when adding new files becuase .gitignore contains "*"
-
-### Showing untracked files in current dir
-
-```shell
-dfg ls-files --others | tree --fromfile
-```
-
-### Showing all dotfiles in current dir
-
-```shell
-dfg ls-files | tree --fromfile
-```
-
-## Contributing
-
-### Working with branches
-
-Default branch is main. To keep other branches up-to-date with main use rebase.
-
-In case branch \<BRANCH\_NAME\> needs a rebae:
-
-```shell
-dfg checkout main
-dfg pull
-dfg checkout -
-dfg pull --rebase origin main
-dfg push origin <BRANCH_NAME> -f
 ```
