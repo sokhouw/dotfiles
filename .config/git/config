@@ -5,9 +5,12 @@
     eitor = vim
     pager = cat
 [diff]
-    tool = vimdiff
-[difftool]
+    tool = nvimdiff
+[difftool "nvimdiff"]
     prompt = false
+    cmd = nvim -d "$LOCAL" "$REMOTE"
+[merge]
+    tool = "nvim -d"
 [mergetool]
     prompt = false
 [format]
