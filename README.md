@@ -31,7 +31,7 @@ Copy and run script below. Update values of DOTFILES\_DIR and DOTFILES\_BRANCH w
 ```shell
 DOTFILES_DIR=$HOME/.dotfiles
 DOTFILES_BRANCH=main
-git clone --bare -b $BRANCH https://github.com/sokhouw/dotfiles/ $DOTFILES_DIR
+git clone --bare -b $DOTFILES_BRANCH https://github.com/sokhouw/dotfiles/ $DOTFILES_DIR
 echo "alias dfg=\"git --git-dir=$DOTFILES_DIR --work-tree=\$HOME\"" >> $HOME/.bashrc
 source $HOME/.bashrc
 dfg reset
