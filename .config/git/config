@@ -2,7 +2,7 @@
     email = marcin.sokolowski@gmail.com
     name = sokhouw
 [core]
-    eitor = vim
+    editor = nvim
     pager = cat
 [diff]
     tool = nvimdiff
