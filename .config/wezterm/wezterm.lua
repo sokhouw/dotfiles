@@ -20,6 +20,7 @@ config.color_scheme = "Material Darker (base16)"
 -- config.color_scheme = "MaterialOcean"
 -- config.color_scheme = "Aci (Gogh)"
 config.color_scheme = "tokyonight"
+config.color_scheme = "Aardvark Blue"
 config.window_background_opacity = 1
 
 config.window_decorations = "TITLE|RESIZE"

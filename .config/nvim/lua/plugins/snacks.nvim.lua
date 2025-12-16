@@ -26,7 +26,7 @@ return {
           { icon = " ", key = "c", desc = "Config", action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})" },
           { icon = "󰣜 ", key = "h", desc = "Health", action = ":checkhealth" },
           { icon = " ", key = "s", desc = "Restore Session", section = "session" },
-          { icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
+          { icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
           { icon = " ", key = "q", desc = "Quit", action = ":qa" },
         },
       },
@@ -42,6 +42,10 @@ return {
     explorer = {
       enabled = true,
       close_on_select = true,
+    },
+    ---@type snacks.notifier.Config
+    notifier = {
+      enabled = true,
     },
     ---@type snacks.picker.Config
     picker = {

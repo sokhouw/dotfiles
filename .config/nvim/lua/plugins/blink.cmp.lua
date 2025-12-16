@@ -43,6 +43,7 @@ return {
         },
       },
       menu = {
+        auto_show = false,
         enabled = true,
         border = "rounded",
       },

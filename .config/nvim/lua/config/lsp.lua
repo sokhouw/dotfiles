@@ -1,4 +1,3 @@
--- Enable LSPs that are controlled manually outside mason
--- Uncomment LSPs that are to be handled manually outside mason
+-- Uncomment LSPs that are to be installed manually outside mason
 -- vim.lsp.enable({"erlangls"})
--- vim.lsp.enable({"elp"})
+vim.lsp.enable({"elp"})
