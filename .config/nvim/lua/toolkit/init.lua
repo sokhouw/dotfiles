@@ -1,8 +1,8 @@
-local M = {
-  log = require("toolkit.log"),
-  mason = require("toolkit.mason"),
-  treesitter = require("toolkit.treesitter"),
-}
+local M = {}
+
+M.log = require("toolkit.log")
+M.mason = require("toolkit.mason")
+M.treesitter = require("toolkit.treesitter")
 
 _G.Toolkit = M
 
