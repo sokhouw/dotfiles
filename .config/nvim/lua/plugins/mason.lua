@@ -4,15 +4,13 @@ return {
     "nvim-treesitter/nvim-treesitter"
   },
   build = ":MasonUpdate",
+  config = Toolkit.mason.config,
   lazy = false,
   opts = {
+    automatic_enable = true,
     ensure_installed = {
-      "tree-sitter-cli",
       "lua-language-server",
       "shellcheck",
     },
   },
-  config = function(_, opts)
-    Core.mason.setup(opts)
-  end,
 }

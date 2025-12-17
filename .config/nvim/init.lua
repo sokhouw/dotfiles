@@ -1,4 +1,4 @@
-require("core")
+require("toolkit")
 
 require("config/clipboard")
 require("config/diagnostic")

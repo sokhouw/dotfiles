@@ -5,7 +5,7 @@ return {
   },
   branch = "main",
   version = false,
-  build = ":TSUpdate",
+  build = Toolkit.treesitter.build,
   opts = {
     auto_install = true,
     ensure_installed = {
@@ -35,7 +35,4 @@ return {
       "yaml",
     },
   },
-  config = function(_, opts)
-    Core.treesitter.setup(opts)
-  end
 }
