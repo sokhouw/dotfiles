@@ -18,22 +18,28 @@ endif
 call plug#begin('~/.local/share/vim/plugged')
 
 " colorschemes
-Plug 'sainnhe/everforest'
-Plug 'romainl/Apprentice'
-Plug 'Rigellute/shades-of-purple.vim'
-Plug 'bluz71/vim-moonfly-colors'
-Plug 'bluz71/vim-nightfly-colors'
-Plug 'morhetz/gruvbox'
+" Plug 'sainnhe/everforest'
+Plug 'sainnhe/sonokai'
+Plug 'sainnhe/edge'
+Plug 'itspriddle/vim-themes'
+" Plug 'romainl/Apprentice'
+" Plug 'Rigellute/shades-of-purple.vim'
+" Plug 'bluz71/vim-moonfly-colors'
+" Plug 'bluz71/vim-nightfly-colors'
+" Plug 'morhetz/gruvbox'
 Plug 'arcticicestudio/nord-vim'
-Plug 'NLKNguyen/papercolor-theme'
+" Plug 'NLKNguyen/papercolor-theme'
+Plug 'cocopon/iceberg.vim'
+" Plug 'nordtheme/vim'
+" Plug 'joshdick/onedark.vim'
 
 " color scheme preview plugin
-Plug 'Maxim4711/colorscheme-preview.vim'
+" Plug 'Maxim4711/colorscheme-preview.vim'
 
 call plug#end()
 
 " --- Colorscheme -----------------------------------------------
-silent! colorscheme slate
+silent! colorscheme iceberg
 
 " --- File handling ---------------------------------------------
 set nocompatible

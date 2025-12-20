@@ -3,7 +3,7 @@ return {
   opts = {
     stages = "fade_in_slide_out",
     timeout = 3000,
-    render = "default",
+    render = "wrapped-default",
   },
   config = function(_, opts)
     local notify = require("notify")

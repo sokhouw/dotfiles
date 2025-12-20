@@ -25,9 +25,7 @@ local ensure_treesitter_cli = function(callback)
 end
 
 M.build = function(spec)
-  Toolkit.log.info("build treesitter 1")
   ensure_treesitter_cli(function()
-    Toolkit.log.info("build treesitter 1")
     local ts = require("nvim-treesitter")
     ts.install(spec.opts.ensure_installed, { summary = true }):await(function()
       ts.update(nil, { summary = true })

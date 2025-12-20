@@ -1,11 +1,19 @@
 local M = {}
 
-M.info = function(msg, title)
-  vim.notify(msg, vim.log.levels.INFO, { title = "toolkit" })
+local function log(level, msg, title)
+  vim.notify(msg, level, { title = title or "Toolkit" })
 end
 
-M.error = function(msg, title)
-  vim.notify(msg, vim.log.levels.ERROR, { title = "toolkit" })
+function M.info(msg, title)
+  log(vim.log.levels.INFO, msg, title)
+end
+
+function M.warn(msg, title)
+  log(vim.log.levels.WARN, msg, title)
+end
+
+function M.error(msg, title)
+  log(vim.log.levels.ERROR, msg, title)
 end
 
 return M

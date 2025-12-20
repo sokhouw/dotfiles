@@ -34,3 +34,71 @@ vim.diagnostic.config({
     },
   },
 })
+
+-- solution 1 (does not work)
+-- vim.api.nvim_create_autocmd("User", {
+--   pattern = "LazyDevDone",
+--   callback = function()
+--     -- refresh current buffer diagnostics
+--     if vim.bo.filetype == "lua" then
+--       vim.cmd("edit")
+--     end
+--   end,
+-- })
+
+-- solution 2 (does not work, ends up in some infinite loop)
+-- vim.api.nvim_create_autocmd("LspAttach", {
+--   callback = function(args)
+--     vim.notify(Toolkit.tostring(args))
+--     local client = vim.lsp.get_client_by_id(args.data.client_id)
+--     if client and client.name == "lua_ls" then
+--       vim.defer_fn(function()
+--         if vim.bo[args.buf].filetype == "lua" then
+--           vim.api.nvim_buf_call(args.buf, function()
+--             vim.cmd("edit")
+--           end)
+--         end
+--       end, 200)
+--     end
+--   end,
+-- })
+
+-- solution 3
+
+local orig_progress = vim.lsp.handlers["$/progress"]
+local pending = {}
+
+local function refresh_buffers(client, ft)
+  for bufnr, attached in pairs(client.attached_buffers or {}) do
+    if attached and vim.api.nvim_buf_is_valid(bufnr) then
+      if vim.bo[bufnr].filetype == ft then
+        vim.schedule(function()
+          vim.api.nvim_buf_call(bufnr, function()
+            vim.cmd("edit")
+            vim.diagnostic.show()
+          end)
+        end)
+      end
+    end
+  end
+end
+
+vim.lsp.handlers["$/progress"] = function(err, result, ctx, config)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  if client and client.name == "lua_ls" then
+    local v = result.value
+    if v.kind == "begin" and v.title == "Loading workspace" then
+      pending[result.token] = true
+    elseif v.kind == "end" and pending[result.token] then
+      pending[result.token] = nil
+      refresh_buffers(client, "lua")
+    end
+  end
+  if orig_progress then
+    orig_progress(err, result, ctx, config)
+  end
+end
+
+_G.oko = function()
+  return pending
+end

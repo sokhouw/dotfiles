@@ -8,5 +8,3 @@ require("config/lsp")
 require("config/lazy")
 
 vim.cmd("colorscheme vague")
-
--- require("themery").setThemeByName("vague", true)

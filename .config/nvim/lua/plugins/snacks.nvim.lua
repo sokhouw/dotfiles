@@ -4,6 +4,22 @@ local header = [[
 ██─█▄▀─███─▄█▀█─██─██▄▀▄███─███─█▄█─██
 █▄▄▄██▄▄█▄▄▄▄▄█▄▄▄▄███▄███▄▄▄█▄▄▄█▄▄▄█]]
 
+_G.Dashboard = {
+  prev_buffer = nil,
+  open = function()
+    Dashboard.prev_buffer = vim.api.nvim_get_current_buf()
+    Snacks.dashboard.open()
+  end,
+  close = function()
+    if Dashboard.prev_buffer and vim.api.nvim_buf_is_valid(Dashboard.prev_buffer) then
+      vim.api.nvim_set_current_buf(Dashboard.prev_buffer)
+      Dashboard.prev_buffer = nil
+    else
+      vim.cmd("qa!")
+    end
+  end,
+}
+
 return {
   "folke/snacks.nvim",
   priority = 1000,
@@ -25,24 +41,37 @@ return {
           { icon = " ", key = "r", desc = "Recent Files", action = ":lua Snacks.dashboard.pick('oldfiles')" },
           { icon = " ", key = "c", desc = "Config", action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})" },
           { icon = "󰣜 ", key = "h", desc = "Health", action = ":checkhealth" },
-          { icon = " ", key = "s", desc = "Restore Session", section = "session" },
+          { icon = " ", key = "s", desc = "Restore session", section = "session" },
+          { icon = " ", key = "p", desc = "Pick session", action = ":lua require('persistence').select()" },
           { icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
           { icon = "󰒳 ", key = "u", desc = "Update", action = ":Lazy update", enabled = package.loaded.lazy ~= nil },
-          { icon = " ", key = "q", desc = "Quit", action = ":qa" },
+          { icon = " ", key = "q", desc = "Quit", action = ":lua Dashboard.close()" },
         },
       },
       sections = {
-        { section = "header" },
-        { section = "keys", gap = 1, padding = 2 },
-        { section = "recent_files", icon = " ", title = "Recent Files", indent = 2, padding = { 2, 2 } },
-        { section = "projects", icon = " ", title = "Projects", indent = 2, padding = 2 },
-        { section = "startup" },
+        { pane = 1, section = "header" },
+        { pane = 1, section = "keys", gap = 0, padding = 1 },
+        { pane = 1, section = "recent_files", icon = " ", title = "Recent Files", indent = 0, padding = 1 },
+        --{ pane = 1, section = "projects", icon = " ", title = "Projects", indent = 2, padding = 2 },
+        { pane = 1, section = "startup" },
       },
     },
     ---@type snacks.picker.explorer.Config
     explorer = {
       enabled = true,
       close_on_select = true,
+    },
+    indent = {
+      enabled = true,
+      animate = {
+        enabled = true,
+        style = "out",
+        easing = "linear",
+        duration = {
+          step = 20,
+          total = 500,
+        },
+      },
     },
     ---@type snacks.notifier.Config
     notifier = {
@@ -95,7 +124,7 @@ return {
   },
   keys = {
     -- Dashboard
-    { "<leader>D", function() Snacks.dashboard.open({}) end, desc = "Dashboard" },
+    { "<leader>D", Dashboard.open, desc = "Dashboard" },
     -- Top Pickers & Explorer
     { "<leader><space>", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
     { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
