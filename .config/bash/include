@@ -1,0 +1,2 @@
+. ~/.config/bash/include.d/aliases
+. ~/.config/bash/include.d/man_colors
