@@ -1,44 +1,90 @@
 #!/bin/bash
 
-print_color() {
-    case "${#1}" in
-        "0") printf "__";;
-        "1") printf "0${1}";;
-        "2") printf "${1}";;
-        *) printf "??";;
-    esac
-}
+# ------------------------------------------------------------------------------
+# Indexed colors
+# ------------------------------------------------------------------------------
 
-print_setaf() {
-    cmd="${1}"
-    bg="${2}"
-    tput sgr0
-    if [ ! -z "${cmd}" ]; then
-        ${cmd}
-    fi
-    printf "[ $(print_color ${bg}) ] "
-    if [ ! -z "${bg}" ]; then
-        tput setab "${bg}"
-    fi
-    for fg in {0..15}; do
-        tput setaf "${fg}"
-        printf "[$(print_color "${fg}")] "
+print_indexed_colors() {
+    _header "Foreground 0-15"
+    for code in {0..15}; do _fg ${code}; done; _reset; echo
+
+    _header "Background 0-15"
+    for code in {0..15}; do _bg ${code}; done; _reset; echo
+
+    _header "Foreground 232-255"
+    for code in {232..243}; do _fg ${code}; done; _reset; echo
+    for code in {244..255}; do _fg ${code}; done; _reset; echo
+
+    _header "Background 232-255"
+    for code in {232..243}; do _bg ${code}; done; _reset; echo
+    for code in {244..255}; do _bg ${code}; done; _reset; echo
+
+    _header "Foreground 16-231"
+    for green in {0..5}; do
+        for blue in {0..5}; do _fg256 0 ${green} ${blue}; done
+        for blue in {5..0}; do _fg256 1 ${green} ${blue}; done
+        for blue in {0..5}; do _fg256 2 ${green} ${blue}; done
+        _reset
+        echo
     done
-    tput sgr0
-    echo
+    for green in {5..0}; do
+        for blue in {0..5}; do _fg256 3 ${green} ${blue}; done
+        for blue in {5..0}; do _fg256 4 ${green} ${blue}; done
+        for blue in {0..5}; do _fg256 5 ${green} ${blue}; done
+        _reset
+        echo
+    done
+    
+    _header "Background 16-231"
+    for green in {0..5}; do
+        for blue in {0..5}; do _bg256 0 ${green} ${blue}; done
+        for blue in {5..0}; do _bg256 1 ${green} ${blue}; done
+        for blue in {0..5}; do _bg256 2 ${green} ${blue}; done
+        _reset
+        echo
+    done
+    for green in {5..0}; do
+        for blue in {0..5}; do _bg256 3 ${green} ${blue}; done
+        for blue in {5..0}; do _bg256 4 ${green} ${blue}; done
+        for blue in {0..5}; do _bg256 5 ${green} ${blue}; done
+        _reset
+        echo
+    done
 }
 
-echo "NORMAL"
-print_setaf "" ""
-for bg in {0..15}; do
-    print_setaf "" "${bg}"
-done
+# ------------------------------------------------------------------------------
 
-echo "DIMMED"
-print_setaf "tput dim" ""
-for bg in {0..15}; do
-    print_setaf "tput dim" "${bg}"
-done
+_fg() {
+    printf "\033[38;5;${1}m%03d " "${1}"
+}
 
+_bg() {
+    printf "\033[48;5;${1}m%03d " "${1}"
+}
 
+_fg256() {
+    V=$((16+36*${1}+6*${2}+${3}))
+    printf "\x1b[38;5;${V}m%03d " "${V}"
+}
 
+_bg256() {
+    V=$((16+36*${1}+6*${2}+${3}))
+    printf "\x1b[48;5;${V}m%03d " "${V}"
+}
+
+_reset() {
+    printf "\033[0m"
+}
+
+_header() {
+    printf "\033[0m"
+    printf "\033[38;5;241m"
+    printf " -------- \033[38;5;255m[%s] \033[38;5;241m" "${1}"
+    printf "%*s\033[0m\n" "$((59 - ${#1}))" "" | tr ' ' '-'
+}
+
+# ------------------------------------------------------------------------------
+# Main
+# ------------------------------------------------------------------------------
+
+print_indexed_colors
