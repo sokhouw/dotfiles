@@ -1,0 +1,44 @@
+#!/bin/bash
+
+print_color() {
+    case "${#1}" in
+        "0") printf "__";;
+        "1") printf "0${1}";;
+        "2") printf "${1}";;
+        *) printf "??";;
+    esac
+}
+
+print_setaf() {
+    cmd="${1}"
+    bg="${2}"
+    tput sgr0
+    if [ ! -z "${cmd}" ]; then
+        ${cmd}
+    fi
+    printf "[ $(print_color ${bg}) ] "
+    if [ ! -z "${bg}" ]; then
+        tput setab "${bg}"
+    fi
+    for fg in {0..15}; do
+        tput setaf "${fg}"
+        printf "[$(print_color "${fg}")] "
+    done
+    tput sgr0
+    echo
+}
+
+echo "NORMAL"
+print_setaf "" ""
+for bg in {0..15}; do
+    print_setaf "" "${bg}"
+done
+
+echo "DIMMED"
+print_setaf "tput dim" ""
+for bg in {0..15}; do
+    print_setaf "tput dim" "${bg}"
+done
+
+
+

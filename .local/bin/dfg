@@ -1,0 +1,4 @@
+#!/bin/sh
+
+GIT=/usr/bin/git
+/usr/bin/git --git-dir ${HOME}/.dotfiles/repo --work-tree=${HOME} $@
