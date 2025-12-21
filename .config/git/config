@@ -4,11 +4,13 @@
 [core]
     editor = nvim
     pager = cat
+; [diff]
+;     tool = vimdiff
 [diff]
-    tool = vimdiff ; nvimdiff
-; [difftool "nvimdiff"]
-;     prompt = false
-;     cmd = nvim -d "$LOCAL" "$REMOTE"
+    tool = nvimdiff
+[difftool "nvimdiff"]
+    prompt = false
+    cmd = nvim -d "$LOCAL" "$REMOTE"
 [merge]
     tool = "nvim -d"
 [mergetool]
