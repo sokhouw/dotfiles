@@ -32,17 +32,18 @@ Copy and run script below.
 DOTFILES_DIR="${HOME}/.local/share/dotfiles"
 REPO_DIR="${DOTFILES_DIR}/repo"
 BACKUP_DIR="${DOTFILES_DIR}/backup"
-mkdir -p ${REPO_DIR}
 git clone --bare -b main https://github.com/sokhouw/dotfiles/ ${REPO_DIR}
+for f in $(git --git-dir ${REPO_DIR} --work-tree=${HOME} diff --name-only --no-color --no-renames main); do 
+    if [ -f "${f}" ]; then
+        echo "Backing up ${f}"
+        [ ! -d "${BACKUP_DIR}/$(dirname ${f})" ] && mkdir -p "${BACKUP_DIR}/$(dirname ${f})" 
+        mv $HOME/$f ${BACKUP_DIR}/${f}
+    fi; 
+done
+git --git-dir ${REPO_DIR} --work-tree=${HOME} reset
+git --git-dir ${REPO_DIR} --work-tree=${HOME} checkout .
 echo ". ~/.config/bash/include" >> $HOME/.bashrc
 source ${HOME}/.bashrc
-dfg reset
-for f in $(dfg diff --name-status --no-color --no-renames main | grep --colour=never "^M" | sed "s/\s\+/:/" | cut -c3-); do
-    [ ! -d "${BACKUP_DIR}/$(dirname ${f})" ] && mkdir -p "${BACKUP_DIR}/$(dirname ${f})" 
-    mv $HOME/$f ${BACKUP_DIR}/${f}
-done
-dfg checkout .
-echo "*" > $HOME/.gitignore # investigate how that impacts other repos in home dir
 ```
 
 In case only parts of the repo are needed, it is possible to checkout only some files.
