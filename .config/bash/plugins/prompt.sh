@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ "${run}" == "1" || "${debug}" == "1" ]]; then
+if [[ "${run}" == "1" ]]; then
     . lib/term.sh
 else
     dfg:lib:include "term"
@@ -10,130 +10,159 @@ fi
 # Globals
 # ------------------------------------------------------------------------------
 
-declare -A dfg_prompt_config=()
-dfg_prompt=()
+dfg_prompt_config_theme='builtin/ribbon'
+dfg_prompt_config_decor='builtin/basic'
+dfg_prompt_config_palette='builtin/neptune'
 
-dfg_prompt_config['prompt.content']='dfg:prompt:builtin:content:multiline'
-dfg_prompt_config['prompt.palette']='ocean_slate'
-dfg_prompt_config['prompt.decor']='dfg:prompt:builtin:decor:multiline none left 1 lean right 1 arrow right 1'
-
-dim() { dfg_prompt_palette=( "#001133" "#aaaaff" "#002244" "#ccccff" "#331100" "#ffaaaa" "#884400" "#ffcccc" "#ff8888" "#ffff88" ); }
-anduino() { dfg_prompt_palette=( "#000a1f" "#b3bbff" "#001433" "#dde0ff" "#0a0a2a" "#aaaaff" "#111144" "#ccccff" "#1a1a55" "#eeeeff"); }
-soft_periwinkle() { dfg_prompt_palette=( "#1a1a33" "#d6d6ff" "#2a2a55" "#f0f0ff" "#3a3a77" "#b3b3ff" "#222244" "#ccccff" "#111133" "#ffffff"); }
-warm_sepa_glow() { dfg_prompt_palette=( "#2a1400" "#ffd1b3" "#3d1f00" "#ffe6d6" "#5c2e00" "#ffb388" "#331100" "#ffcccc" "#1f0a00" "#fff0e6"); }
-autumn_ember() { dfg_prompt_palette=( "#331a00" "#ffd199" "#4d2600" "#ffebcc" "#663300" "#ffb366" "#884400" "#ffcccc" "#261300" "#fff2dd"); }
-rose_ash() { dfg_prompt_palette=( "#330011" "#ffcce0" "#4d001a" "#ffe6f0" "#660022" "#ff99bb" "#22000b" "#fff0f6" "#110006" "#ffffff"); }
-dusty_lavender() { dfg_prompt_palette=( "#221133" "#e0ccff" "#331a55" "#f2e6ff" "#442277" "#ccb3ff" "#1a0f2a" "#eeeeff" "#0f081a" "#ffffff"); }
-ocean_slate() { dfg_prompt_palette=( "#001f26" "#ccefff" "#003340" "#e6f9ff" "#004d66" "#99e6ff" "#002933" "#dff6ff" "#00151a" "#ffffff"); }
-copper_bush() { dfg_prompt_palette=( "#331100" "#ffd6cc" "#4d1a00" "#ffede6" "#662200" "#ffad99" "#2a0e00" "#fff2ee" "#1a0800" "#ffffff"); }
-solar_pastel() { dfg_prompt_palette=( "#332b00" "#fff7cc" "#4d4000" "#fffce6" "#665500" "#fff199" "#261f00" "#fff9dd" "#1a1400" "#ffffff"); }
+declare dfg_prompt_theme=()
+declare -A dfg_prompt_decor=()
+declare -A dfg_prompt_color=()
 
 # ------------------------------------------------------------------------------
-# Configuration - content - multiline
+# Built-In - Themes
 # ------------------------------------------------------------------------------
 
-dfg:prompt:builtin:content:multiline() {
+dfg:prompt:builtin:theme:ribbon() {
     local branch=$(_branch)
     local result=$(_result)
-    local user=$(_user)
-    local prompt_class="user_prompt"
-    if [[ "${user}" == "root" ]]; then
-        prompt_class="root_prompt"
-    fi
-    dfg_prompt=(
-        "%${prompt_class}"
+    dfg_prompt_theme=(
+        '%prompt'
         '╭─'
     )
     if [[ "${result}" != "0" ]]; then
-        dfg_prompt+=(
+        dfg_prompt_theme+=(
             '!separator.begin'
             '%error'
             "=${result}"
             '!separator'
-            '%time'
+            '%04'
         )
     else
-        dfg_prompt+=(
+        dfg_prompt_theme+=(
             '!separator.begin'
-            '%time'
+            '%04'
         )
     fi
-    dfg_prompt+=(
+    dfg_prompt_theme+=(
         '=$(_time_hms)' 
-        '!break.time'
+        '!break.one'
         '=$(_day_of_week)'
-        '!separator'
-        '%user'
+        '!separator.one'
+        '%14'
         '=$(_user)@$(_host)'
-        '!separator'
-        '%dir'
+        '!separator.one'
+        '%20'
         '=$(_short_pwd)'
     )
     if [ ! -z "${branch}" ]; then
-        dfg_prompt+=(
-            '!separator'
-            '%git'
+        dfg_prompt_theme+=(
+            '!separator.two'
+            '%30'
             ''
-            '!break.git'
+            '!break.two'
             "=${branch}"
         )
     fi
-    dfg_prompt+=(
+    dfg_prompt_theme+=(
         '!separator.end'
         '!newline'
-        "%${prompt_class}"
+        '%_3'
         '╰ '
     )
 }
 
 # ------------------------------------------------------------------------------
-# Configuration - color - default
+# Built-In - Decors
 # ------------------------------------------------------------------------------
 
-dfg:prompt:builtin:color:multiline() {
-    dfg_prompt_config['time.bg']="${dfg_prompt_palette[0]}"
-    dfg_prompt_config['time.fg']="${dfg_prompt_palette[1]}"
+#                                    |begin---| |sep1-----| |sep2----| |end-------| |break1---| |break2---| |padding|
+dfg:prompt:builtin:decor:straight()    { dfg:prompt:builtin:decor_builder straight ''  straight '' lean right straight '' space '' '' space '' '' 1; }
 
-    dfg_prompt_config['user.bg']="${dfg_prompt_palette[2]}"
-    dfg_prompt_config['user.fg']="${dfg_prompt_palette[3]}"
+dfg:prompt:builtin:decor:arrows_ll()   { dfg:prompt:builtin:decor_builder arrow  left  straight '' lean right arrow    left  space '' '' space '' '' 1; }
+dfg:prompt:builtin:decor:arrows_lr()   { dfg:prompt:builtin:decor_builder arrow  left  straight '' lean right arrow    right space '' '' space '' '' 1; }
+dfg:prompt:builtin:decor:arrows_rl()   { dfg:prompt:builtin:decor_builder arrow  right straight '' lean right arrow    left  space '' '' space '' '' 1; }
+dfg:prompt:builtin:decor:arrows_rr()   { dfg:prompt:builtin:decor_builder arrow  right straight '' lean right arrow    right space '' '' space '' '' 1; }
 
-    dfg_prompt_config['dir.bg']="${dfg_prompt_palette[4]}"
-    dfg_prompt_config['dir.fg']="${dfg_prompt_palette[5]}"
+dfg:prompt:builtin:decor:round_ll()    { dfg:prompt:builtin:decor_builder round  left  straight '' lean right round    left  space '' '' space '' '' 1; }
+dfg:prompt:builtin:decor:round_lr()    { dfg:prompt:builtin:decor_builder round  left  straight '' lean right round    right space '' '' space '' '' 1; }
+dfg:prompt:builtin:decor:round_rl()    { dfg:prompt:builtin:decor_builder round  right straight '' lean right round    left  space '' '' space '' '' 1; }
+dfg:prompt:builtin:decor:round_rr()    { dfg:prompt:builtin:decor_builder round  right straight '' lean right round    right space '' '' space '' '' 1; }
 
-    dfg_prompt_config['git.bg']="${dfg_prompt_palette[6]}"
-    dfg_prompt_config['git.fg']="${dfg_prompt_palette[7]}"
-    
-    dfg_prompt_config['error.bg']="${dfg_prompt_palette[8]}"
-    dfg_prompt_config['error.fg']="${dfg_prompt_palette[9]}"
+dfg:prompt:builtin:decor:flames_ll()   { dfg:prompt:builtin:decor_builder flames left  straight '' lean right flames   left  space '' '' space '' '' 1; }
+dfg:prompt:builtin:decor:flames_lr()   { dfg:prompt:builtin:decor_builder flames left  straight '' lean right flames   right space '' '' space '' '' 1; }
+dfg:prompt:builtin:decor:flames_rl()   { dfg:prompt:builtin:decor_builder flames right straight '' lean right flames   left  space '' '' space '' '' 1; }
+dfg:prompt:builtin:decor:flames_rr()   { dfg:prompt:builtin:decor_builder flames right straight '' lean right flames   right space '' '' space '' '' 1; }
 
-    dfg_prompt_config['prompt.fg']="${dfg_prompt_palette[2]}"
+dfg:prompt:builtin:decor_builder() {
+    dfg_prompt_decor=()
+
+    local padding="${15}"
+
+    dfg_prompt_decor['separator.begin.kind']="${1}"
+    dfg_prompt_decor['separator.begin.direction']="${2:-right}"
+    dfg_prompt_decor['separator.begin.padding_right']=${padding}
+    dfg_prompt_decor['separator.begin.padding_right']=${padding}
+    dfg_prompt_decor['separator.begin.mode']=begin
+
+    dfg_prompt_decor['separator.one.kind']="${3}"
+    dfg_prompt_decor['separator.one.direction']="${4:-right}"
+    dfg_prompt_decor['separator.one.padding_left']="${padding}"
+    dfg_prompt_decor['separator.one.padding_right']="${padding}"
+
+    dfg_prompt_decor['separator.two.kind']="${5}"
+    dfg_prompt_decor['separator.two.direction']="${6:-right}"
+    dfg_prompt_decor['separator.two.padding_left']="${padding}"
+    dfg_prompt_decor['separator.two.padding_right']="${padding}"
+
+    dfg_prompt_decor['separator.end.kind']="${7}"
+    dfg_prompt_decor['separator.end.direction']="${8:-right}"
+    dfg_prompt_decor['separator.end.padding_left']="${padding}"
+    dfg_prompt_decor['separator.end.mode']=end
+
+    dfg_prompt_decor['break.one.kind']="${9}"
+    dfg_prompt_decor['break.one.direction']="${10:-right}"
+    dfg_prompt_decor['break.one.class']="${11}"
+
+    dfg_prompt_decor['break.two.kind']="${12}"
+    dfg_prompt_decor['break.two.direction']="${13:-right}"
+    dfg_prompt_decor['break.two.class']="${14}"
 }
 
-# ------------------------------------------------------------------------------
-# Configuration - decor - default
-# ------------------------------------------------------------------------------
-
-dfg:prompt:builtin:decor:multiline() {
-    dfg_prompt_config['separator.begin.kind']=${1}
-    dfg_prompt_config['separator.begin.direction']=${2}
-    dfg_prompt_config['separator.begin.padding_right']=${3}
-    dfg_prompt_config['separator.begin.mode']=begin
-
-    dfg_prompt_config['separator.kind']=${4}
-    dfg_prompt_config['separator.direction']=${5}
-    dfg_prompt_config['separator.padding_left']=${6}
-    dfg_prompt_config['separator.padding_right']=${6}
-
-    dfg_prompt_config['separator.end.kind']=${7}
-    dfg_prompt_config['separator.end.direction']=${8}
-    dfg_prompt_config['separator.end.padding_left']=${9}
-    dfg_prompt_config['separator.end.mode']=end
-
-    dfg_prompt_config['break.time.kind']=space
-
-    dfg_prompt_config['break.git.kind']=space
-}
-
+# # ------------------------------------------------------------------------------
+# # Built-In - Colors
+# # ------------------------------------------------------------------------------
+# #                                                           |head1| |head2| |text1| |text2| |error| |prompt|
+# dfg:prompt:builtin:color:basic() { dfg:prompt:color_builder 003 001 004 003 006 008 012 000 009 010 '' 001  ; }
+# dfg:prompt:builtin:color:basic() { dfg:prompt:color_builder 003 001 004 003 006 008 012 000 009 010 '' 001  ; }
+# --deep-crimson: #931f1dff;
+# --faded-copper: #937b63ff;
+# --palm-leaf: #8a9b68ff;
+# --dry-sage: #b6c197ff;
+# --beige: #d5ddbcff;
+#
+# dfg:prompt:color_builder() {
+#     dfg_prompt_color=()
+#
+#     dfg_prompt_color['head1.bg']="${1}"
+#     dfg_prompt_color['head1.fg']="${2}"
+#
+#     dfg_prompt_color['head2.bg']="${3}"
+#     dfg_prompt_color['head2.fg']="${4}"
+#
+#     dfg_prompt_color['text1.bg']="${5}"
+#     dfg_prompt_color['text1.fg']="${6}"
+#
+#     dfg_prompt_color['text2.bg']="${7}"
+#     dfg_prompt_color['text2.fg']="${8}"
+#
+#     dfg_prompt_color['error.bg']="${9}"
+#     dfg_prompt_color['error.fg']="${10}"
+#
+#     dfg_prompt_color['prompt.bg']="${11}"
+#     dfg_prompt_color['prompt.fg']="${12}"
+# }
+#
+#
 # ------------------------------------------------------------------------------
 # Prompt
 # ------------------------------------------------------------------------------
@@ -145,52 +174,51 @@ dfg:prompt:set() {
 spaces='        '
 
 dfg:prompt:print() {
-    eval ${dfg_prompt_config['prompt.content']}
-    eval ${dfg_prompt_config['prompt.palette']}
-    dfg:prompt:builtin:color:multiline
-    eval ${dfg_prompt_config['prompt.decor']}
-
-    local class=''
-
-    for (( i = 0; i < ${#dfg_prompt[@]}; i++ )) do
-        local v="${dfg_prompt[${i}]}"
-        if [[ "${debug}" == "1" ]]; then
-            dfg:term:reset
-            dfg:term:fg 2
-            printf '[%s] ' "${v}"
-            dfg:term:reset
-        fi
-        case ${v} in
+    case ${dfg_prompt_config_theme} in
+        'builtin/'*) dfg:prompt:builtin:theme:${dfg_prompt_config_theme:8} ;;
+        *)           ${dfg_prompt_config_theme} ;;
+    esac
+    case ${dfg_prompt_config_decor} in
+        'builtin/'*) dfg:prompt:builtin:decor:${dfg_prompt_config_decor:8} ;;
+        *)           ${dfg_prompt_config_decor} ;;
+    esac
+    case ${dfg_prompt_config_palette} in
+        'builtin/'*) declare -n palette="dfg_palette_${dfg_prompt_config_palette:8}" ;;
+        *)           exit 0; palette_var=${dfg_prompt_config_palette} ;;
+    esac
+    if [[ "${debug}" == "1" ]]; then
+        for k in ${!dfg_prompt_theme[@]}; do
+            echo "dfg_config_theme[${k}]=${dfg_prompt_theme[${k}]}"
+        done
+        for k in ${!dfg_prompt_decor[@]}; do
+            echo "dfg_config_decor[${k}]=${dfg_prompt_decor[${k}]}"
+        done
+    fi
+    echo ok
+    for (( i = 0; i < ${#dfg_prompt_theme[@]}; i++ )) do
+        local v="${dfg_prompt_theme[${i}]}"
+        case "${v}" in
             '%'*)
-                class=${v:1}
-                local next_bg=${dfg_prompt_config["${class}.bg"]}
-                local next_fg=${dfg_prompt_config["${class}.fg"]}
+                local next_bg="${palette[${v:1:1}]}"
+                local next_fg="${palette[${v:2:1}]}"
                 if [[ "${debug}" == "1" ]]; then
-                    printf 'class %s' "${class}"
-                    if [[ "${next_bg}" != "" ]]; then
-                        printf ' bg=%s' "${next_bg}"
-                    fi
-                    if [[ "${next_fg}" != "" ]]; then
-                        printf ' fg=%s' "${next_fg}"
-                    fi
-                    printf '\n'
-                else
-                    if [[ "${next_bg}" != "" ]]; then
-                        dfg:term:bg "${next_bg}"
-                    fi
-                    if [[ "${next_fg}" != "" ]]; then
-                        dfg:term:fg "${next_fg}"
-                    fi
+                    dfg:term:debug "[next_bg=${next_bg},next_fg=${next_fg}]"
+                fi
+                if [[ "${next_bg}" != "" ]]; then
+                    dfg:term:bg "${next_bg}"
+                fi
+                if [[ "${next_fg}" != "" ]]; then
+                    dfg:term:fg "${next_fg}"
                 fi
                 ;;
 
             '!separator'*)
-                local prefix=${v:1}
-                local mode=${dfg_prompt_config["${prefix}.mode"]}
-                local kind=${dfg_prompt_config["${prefix}.kind"]}
-                local direction=${dfg_prompt_config["${prefix}.direction"]}
-                local padding_left=${dfg_prompt_config["${prefix}.padding_left"]}
-                local padding_right=${dfg_prompt_config["${prefix}.padding_right"]}
+                local prefix="${v:1}"
+                local mode=${dfg_prompt_decor["${prefix}.mode"]}
+                local kind=${dfg_prompt_decor["${prefix}.kind"]}
+                local direction=${dfg_prompt_decor["${prefix}.direction"]}
+                local padding_left=${dfg_prompt_decor["${prefix}.padding_left"]}
+                local padding_right=${dfg_prompt_decor["${prefix}.padding_right"]}
                 local char=$(dfg:prompt:decor:char ${kind} ${direction})
                 local next_bg=''
                 local next_fg=''
@@ -200,129 +228,99 @@ dfg:prompt:print() {
                     *)
                         # skip next class item, we will set bg & fg
                         (( i += 1 ))
-                        local next_v="${dfg_prompt[${i}]}"
+                        local next_v="${dfg_prompt_theme[${i}]}"
                         case ${next_v} in
                             '%'*)
-                                local next_class=${next_v:1}
-                                next_bg=${dfg_prompt_config["${next_class}.bg"]}
-                                next_fg=${dfg_prompt_config["${next_class}.fg"]}
+                                local next_bg="${palette[${next_v:1:1}]}"
+                                local next_fg="${palette[${next_v:2:1}]}"
+                                if [[ "${debug}" ]]; then
+                                    dfg:term:debug "[next_bg=${next_bg},next_fg=${next_fg}]"
+                                fi
                                 ;;
                             *)
-                                printf '[class expected: %s]' "${next_v}"
+                                printf '[colors expected: %s]' "${next_v}"
                                 ;;
                         esac
                 esac
-                if [[ "${debug}" == "1" ]]; then
-                    printf '%s,mode=%s,char=%s,next_class=(%s),next_bg=%s,next_fg=%s\n' \
-                        "${prefix}" "${mode}" "${char}" "${next_class}" "${next_bg}" "${next_fg}"
-                else
-                    if [[ "${padding_left}" != "" ]]; then
-                        printf '%s' "${spaces:0:${padding_left}}"
-                    fi
-                    case ${direction} in
-                        left)
-                            case ${mode} in
-                                end)
-                                    local bg=${dfg_term_bg}
-                                    dfg:term:reset
-                                    dfg:term:fg ${bg}
-                                    dfg:term:negative
-                                    printf '%s' "${char}"
-                                    dfg:term:positive
-                                    dfg:term:reset
-                                    ;;
-                                *)
-                                    dfg:term:fg ${next_bg}
-                                    printf '%s' "${char}"
-                                    dfg:term:bgfg ${next_bg} ${next_fg}
-                                    ;;
-                            esac
-                            ;;
-                        right)
-                            case ${mode} in
-                                begin)
-                                    dfg:term:negative
-                                    dfg:term:fg ${next_bg}
-                                    printf '%s' "${char}"
-                                    dfg:term:positive 
-                                    dfg:term:bgfg ${next_bg} ${next_fg}
-                                    ;;
-                                end)
-                                    local bg=${dfg_term_bg}
-                                    dfg:term:reset
-                                    dfg:term:fg ${bg}
-                                    printf '%s' "${char}"
-                                    dfg:term:reset
-                                    ;;
-                                *)
-                                    dfg:term:bgfg ${next_bg} ${dfg_term_bg}
-                                    printf '%s' "${char}"
-                                    dfg:term:fg ${next_fg}
-                                    ;;
-                            esac
-                    esac
-                    if [[ "${padding_right}" != "" ]]; then
-                        printf '%s' "${spaces:0:${padding_right}}"
-                    fi
-                    if [[ "${direction}" == 'end' ]]; then
-                        printf '\n'
-                    fi
+                if [[ "${padding_left}" != "" ]]; then
+                    printf '%s' "${spaces:0:${padding_left}}"
+                fi
+                case ${direction} in
+                    left|'')
+                        case ${mode} in
+                            end)
+                                local bg=${dfg_term_bg}
+                                dfg:term:reset
+                                dfg:term:fg ${bg}
+                                dfg:term:negative
+                                printf '%s' "${char}"
+                                dfg:term:positive
+                                dfg:term:reset
+                                ;;
+                            *)
+                                dfg:term:fg ${next_bg}
+                                printf '%s' "${char}"
+                                dfg:term:bgfg ${next_bg} ${next_fg}
+                                ;;
+                        esac
+                        ;;
+                    right)
+                        case ${mode} in
+                            begin)
+                                dfg:term:negative
+                                dfg:term:fg ${next_bg}
+                                printf '%s' "${char}"
+                                dfg:term:positive 
+                                dfg:term:bgfg ${next_bg} ${next_fg}
+                                ;;
+                            end)
+                                local bg=${dfg_term_bg}
+                                dfg:term:reset
+                                dfg:term:fg ${bg}
+                                printf '%s' "${char}"
+                                dfg:term:reset
+                                ;;
+                            *)
+                                dfg:term:bgfg ${next_bg} ${dfg_term_bg}
+                                printf '%s' "${char}"
+                                dfg:term:fg ${next_fg}
+                                ;;
+                        esac
+                        ;;
+                esac
+                if [[ "${padding_right}" != "" ]]; then
+                    printf '%s' "${spaces:0:${padding_right}}"
+                fi
+                if [[ "${direction}" == 'end' ]]; then
+                    printf '\n'
                 fi
                 ;;
             '!break'*)
                 local prefix="${v:1}"
-                local break_kind=${dfg_prompt_config["${prefix}.kind"]}
-                local break_direction=${dfg_prompt_config["${prefix}.direction"]}
-                local break_class=${dfg_prompt_config["${prefix}.class"]}
-                if [[ "${break_class}" != "" ]]; then
-                    local break_fg=${dfg_prompt_config["${break_class}.fg"]}
+                local break_kind=${dfg_prompt_decor["${prefix}.kind"]}
+                local break_direction=${dfg_prompt_decor["${prefix}.direction"]}
+                local break_fg="${palette[${dfg_prompt_decor["${prefix}.fg"]}]}"
+                local break_char="$(dfg:prompt:break:char ${break_kind} ${break_direction})"
+                if [[ "${break_fg}" != "" ]]; then
+                    local fg="${dfg_term_fg}"
+                    dfg:term:fg "${break_fg}"
+                    printf '%s' "${break_char}"
+                    dfg:term:fg "${fg}"
                 else
-                    local break_fg=""
-                fi
-                local break_char=$(dfg:prompt:break:char ${break_kind} ${break_direction})
-                if [[ "${debug}" == "1" ]]; then
-                    printf '%s,char=%s,char_class=%s,char_fg=%s\n' \
-                        "${prefix}" "${break_char}" "${break_class}" "${break_fg}"
-                else
-                    if [[ "${break_fg}" != "" ]]; then
-                        local fg=${dfg_term_fg}
-                        dfg:term:fg ${break_fg}
-                        printf '%s' "${break_char}"
-                        dfg:term:fg ${fg}
-                    else
-                        printf '%s' "${break_char}"
-                    fi
+                    printf '%s' "${break_char}"
                 fi
                 ;;
-            '!newline'*)
-                local s="${v:7}"
-                local next_class=${s#*:}
-                local next_bg=${dfg_prompt_config["${next_class}.bg"]}
-                local next_fg=${dfg_prompt_config["${next_class}.fg"]}
-                if [[ "${debug}" == "1" ]]; then
-                    printf 'newline,next_class=(%s)\n' "${next_class}"
-                else
-                    printf '\n'
-                fi
+            '!newline')
+                printf '\n'
                 ;;
             '!'*)
-                if [[ "${debug}" == "1" ]]; then
-                    printf "unknown command '${v:1}'\n"
-                fi
+                printf "[unknown command '${v:1}']"
                 ;;
             =*)
-                if [[ "${debug}" == "1" ]]; then
-                    eval printf '\"%s\"\\n' "${v:1}"
-                else
-                    printf '%s' "${v:1}"
-                fi
+                printf '%s' "${v:1}"
                 ;;
             *)
-                if [[ "${debug}" == "1" ]]; then
-                    printf '"%s"\n' "${v}"
-                else
-                    printf '%s' "${v}"
-                fi
+                printf '%s' "${v}"
                 ;;
         esac
     done
@@ -339,7 +337,7 @@ dfg:prompt:decor:char() {
             case ${1} in
                 block)    printf '▀' ;; # 2580
                 full)     printf '█' ;; # 2588
-                half)     printf '▐' ;; # 2590
+                straight) printf '▐' ;; # 2590
                 shade1)   printf '░' ;; # 2591
                 shade2)   printf '▒' ;; # 2592
                 shade3)   printf '▓' ;; # 2593
@@ -356,11 +354,11 @@ dfg:prompt:decor:char() {
                 *)        printf '%s' "${1}" ;;
             esac
             ;;
-        right)
+        right|'')
             case ${1} in
                 block)    printf '▀' ;; # 2580
                 full)     printf '█' ;; # 2588
-                half)     printf '▌' ;; # 258c
+                straight) printf '▌' ;; # 258c
                 shade1)   printf '░' ;; # 2591
                 shade2)   printf '▒' ;; # 2592
                 shade3)   printf '▓' ;; # 2593
@@ -378,11 +376,8 @@ dfg:prompt:decor:char() {
             esac
             ;;
         *)
-            case ${1} in
-                space)    printf ' ' ;;
-                none) ;;
-                *)        printf '%s' ${1} ;;
-            esac
+            printf '%s' ${1}
+            ;;
     esac
 }
 
@@ -403,7 +398,7 @@ dfg:prompt:break:char() {
                 *)        printf '%s' ${1} ;;
             esac
             ;;
-        right)
+        right|'')
             case ${1} in
                 striaght) printf '│'  ;; # 2502
                 lean)     printf '╱'  ;; # 2571
@@ -415,10 +410,8 @@ dfg:prompt:break:char() {
             esac
             ;;
         *)
-            case ${1} in
-                space)    printf ' ' ;;
-                *)        printf '%s' ${1} ;;
-            esac
+            printf '%s' ${1}
+            ;;
     esac
 }
 
@@ -482,8 +475,6 @@ _branch() {
     # local pwd="$(pwd)"
     # pwd="${pwd##${HOME}/}"
     # pwd="$(echo "${pwd}" | cut -d'/' -f1,2)"
-    # echo $DFG
-    # echo $pwd
     # for s in $(${DFG} ls-files --full-name 2>/dev/null | cut -d'/' -f1,2 | sort -u); do
     #     if [ "${s}" = "${pwd}" ]; then
     #         ${DFG} branch --show-current 2>/dev/null
@@ -521,12 +512,208 @@ _host() {
 # Main
 # ------------------------------------------------------------------------------
 
-dfg:prompt:set
-# if [[ "${run}" == "1" ]]; then
-#     local ps1=$(dfg:prompt:print
-#     eval "printf '\"%b\"\\n' \"$(dfg:prompt:print)\""
-# elif [[ "${debug}" == "1" ]]; then
-#     dfg:prompt:print
-# else
-#     dfg:prompt:set
-# fi
+if [[ "${run}" == "1" ]]; then
+    for t in $(grep "^dfg:prompt:builtin:theme:" -r plugins/prompt.sh | cut -f5 -d: | cut -f1 -d'('); do
+        if [[ "${theme}" == "" || "${theme}" == "${t}" ]]; then
+            dfg_prompt_config_theme="builtin/${t}"
+            for d in $(grep "^dfg:prompt:builtin:decor:" -r plugins/prompt.sh | cut -f5 -d: | cut -f1 -d'('); do
+                if [[ "${decor}" == "" || "${decor}" == "${d}" ]]; then
+                    dfg_prompt_config_decor="builtin/${d}"
+                    for p in $(grep "^declare dfg_palette_" lib/color.sh | cut -d_ -f3- | cut -d= -f1); do
+                        if [[ "${palette}" == "" || "${palette}" == "${p}" ]]; then
+                            echo "theme=${t},decor=${d},palette=${p}"
+                            dfg_prompt_config_palette="builtin/${p}"
+                            echo "calling"
+                            eval "printf '%b\\n' \"$(dfg:prompt:print)\""
+                            echo "called"
+                        fi
+                    done
+                fi
+            done
+        fi
+    done
+else
+    dfg:prompt:set
+fi
+
+# dfg:prompt:builtin:palette:dim() { 
+#     dfg_prompt_palette=( 
+#         "#001133" "#aaaaff" 
+#         "#002244" "#ccccff" 
+#         "#331100" "#ffaaaa" 
+#         "#884400" "#ffcccc" 
+#         "#ff8888" "#ffff88" 
+#     ) 
+# }
+#
+# dfg:prompt:builtin:palette:midnight_indigo() {
+#   dfg_prompt_palette=(
+#         '#000a1f' '#6b7cff'
+#         '#001433' '#9fb0ff'
+#         '#0a0a2a' '#4f63ff'
+#         '#111144' '#d2dbff'
+#         '#1a1a55' '#b7c3ff'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:soft_periwinkle() {
+#     dfg_prompt_palette=(
+#         '#1a1a33' '#b0b4ff'
+#         '#2a2a55' '#e8eaff'
+#         '#3a3a77' '#8c90ff'
+#         '#222244' '#6f76ff'
+#         '#111133' '#cfd2ff'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:warm_sepia_glow() {
+#     dfg_prompt_palette=(
+#         '#2a1400' '#ff9650'
+#         '#3d1f00' '#ffd9bf'
+#         '#5c2e00' '#ff7a33'
+#         '#331100' '#ffb08a'
+#         '#1f0a00' '#ffe2cf'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:autumn_ember() {
+#     dfg_prompt_palette=(
+#         '#331a00' '#ff9a3d'
+#         '#4d2600' '#ffe1b8'
+#         '#663300' '#ff7a1a'
+#         '#884400' '#ffb48f'
+#         '#261300' '#ffedd9'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:rose_ash() {
+#     dfg_prompt_palette=(
+#         '#330011' '#ff6fa3'
+#         '#4d001a' '#ffd1e4'
+#         '#660022' '#ff4f8f'
+#         '#22000b' '#ffb5d1'
+#         '#110006' '#ffe6f0'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:dusty_lavender() {
+#     dfg_prompt_palette=(
+#         '#221133' '#a27bff'
+#         '#331a55' '#ead9ff'
+#         '#442277' '#8b5cff'
+#         '#1a0f2a' '#cdb3ff'
+#         '#0f081a' '#efe6ff'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:ocean_slate() {
+#     dfg_prompt_palette=(
+#         '#001f26' '#5fd8ff'
+#         '#003340' '#d6f7ff'
+#         '#004d66' '#2ecbff'
+#         '#002933' '#9be9ff'
+#         '#00151a' '#e0faff'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:moss_and_cream() {
+#     dfg_prompt_palette=(
+#         '#1a2600' '#9dff2e'
+#         '#2a4000' '#ebffb8'
+#         '#3d5c00' '#7fe600'
+#         '#223300' '#c9ff7a'
+#         '#111a00' '#f1ffe0'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:copper_blush() {
+#     dfg_prompt_palette=(
+#         '#331100' '#ff8a66'
+#         '#4d1a00' '#ffe1d6'
+#         '#662200' '#ff6a3d'
+#         '#2a0e00' '#ffc1ad'
+#         '#1a0800' '#ffece6'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:solar_pastel() {
+#     dfg_prompt_palette=(
+#         '#332b00' '#ffd11a'
+#         '#4d4000' '#fff2b3'
+#         '#665500' '#ffbf00'
+#         '#261f00' '#ffe680'
+#         '#1a1400' '#fff0c9'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:industrial() {
+#     dfg_prompt_palette=(
+#         '#1a1a1a' '#bfbfbf'
+#         '#262626' '#e0e0e0'
+#         '#333333' '#9fa6ad'
+#         '#404040' '#cfd6dc'
+#         '#4d4d4d' '#f0f2f4'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:old_city() {
+#     dfg_prompt_palette=(
+#         '#2b1d14' '#e0c2a2'
+#         '#3a261a' '#f2d8bd'
+#         '#4a3224' '#d4b08c'
+#         '#5c4030' '#ebcfae'
+#         '#6f523f' '#f7eadb'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:dark_wood() {
+#     dfg_prompt_palette=(
+#         '#1f140a' '#d2b48c'
+#         '#2d1d12' '#e6c9a8'
+#         '#3b2718' '#b9966e'
+#         '#4a3220' '#dec3a1'
+#         '#5a402b' '#f0e0cf'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:fire() {
+#     dfg_prompt_palette=(
+#         '#330000' '#ff6a00'
+#         '#4d0000' '#ff9a3d'
+#         '#660000' '#ff3d00'
+#         '#802000' '#ffb36b'
+#         '#992f00' '#ffd2a3'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:iceberg() {
+#     dfg_prompt_palette=(
+#         '#001a1f' '#6fe7ff'
+#         '#002830' '#a6f3ff'
+#         '#003d4a' '#2fd6ff'
+#         '#005466' '#8feeff'
+#         '#006b80' '#d9fbff'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:winter_night() {
+#     dfg_prompt_palette=(
+#         '#0b1020' '#8fa8ff'
+#         '#121a33' '#b3c5ff'
+#         '#1a244d' '#6f8cff'
+#         '#232f66' '#cfd9ff'
+#         '#2d3a80' '#e6ecff'
+#     )
+# }
+#
+# dfg:prompt:builtin:palette:moonlight() {
+#     dfg_prompt_palette=(
+#         '#0f111a' '#aab0c8'
+#         '#181b26' '#d0d5f0'
+#         '#22263a' '#8f97c8'
+#         '#2c314d' '#bcc3ff'
+#         '#373d66' '#e4e8ff'
+#     )
+# }
+#
+

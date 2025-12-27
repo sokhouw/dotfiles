@@ -12,7 +12,6 @@ DFG="git --git-dir ${dfg_repo_dir} --work-tree ${HOME}"
 
 # main dfg configuration
 declare -A dfg_config=()
-dfg_config_prefix=()
 
 # ------------------------------------------------------------------------------
 # Core - dfg:lib

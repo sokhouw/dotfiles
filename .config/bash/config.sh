@@ -4,7 +4,7 @@
 # Configuration
 # ------------------------------------------------------------------------------
 
-dfg_config['plugins']="aliases man_colors prompt"
+dfg_config['plugins']="aliases man_colors"
 
 # ------------------------------------------------------------------------------
 # Configuration - prompt
