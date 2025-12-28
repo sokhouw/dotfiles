@@ -26,21 +26,21 @@ dfg:prompt:builtin:theme:ribbon() {
     local branch=$(_branch)
     local result=$(_result)
     dfg_prompt_theme=(
-        '%prompt'
+        '%f3'
         '╭─'
     )
     if [[ "${result}" != "0" ]]; then
         dfg_prompt_theme+=(
             '!separator.begin'
-            '%error'
+            '%b4' '%f0'
             "=${result}"
             '!separator'
-            '%04'
+            '%b0' '%f4'
         )
     else
         dfg_prompt_theme+=(
             '!separator.begin'
-            '%04'
+            '%b0' '%f4'
         )
     fi
     dfg_prompt_theme+=(
@@ -48,16 +48,17 @@ dfg:prompt:builtin:theme:ribbon() {
         '!break.one'
         '=$(_day_of_week)'
         '!separator.one'
-        '%14'
+        '%b1' '%f4'
         '=$(_user)@$(_host)'
         '!separator.one'
-        '%20'
+        '%b2' '%f0'
         '=$(_short_pwd)'
     )
     if [ ! -z "${branch}" ]; then
         dfg_prompt_theme+=(
             '!separator.two'
-            '%30'
+            '%b3'
+            '%f0'
             ''
             '!break.two'
             "=${branch}"
@@ -66,7 +67,7 @@ dfg:prompt:builtin:theme:ribbon() {
     dfg_prompt_theme+=(
         '!separator.end'
         '!newline'
-        '%_3'
+        '%f3'
         '╰ '
     )
 }
@@ -194,24 +195,15 @@ dfg:prompt:print() {
             echo "dfg_config_decor[${k}]=${dfg_prompt_decor[${k}]}"
         done
     fi
-    echo ok
-    for (( i = 0; i < ${#dfg_prompt_theme[@]}; i++ )) do
+    for (( i = 0; i < ${#dfg_prompt_theme[@]}; i++ )); do
         local v="${dfg_prompt_theme[${i}]}"
         case "${v}" in
-            '%'*)
-                local next_bg="${palette[${v:1:1}]}"
-                local next_fg="${palette[${v:2:1}]}"
-                if [[ "${debug}" == "1" ]]; then
-                    dfg:term:debug "[next_bg=${next_bg},next_fg=${next_fg}]"
-                fi
-                if [[ "${next_bg}" != "" ]]; then
-                    dfg:term:bg "${next_bg}"
-                fi
-                if [[ "${next_fg}" != "" ]]; then
-                    dfg:term:fg "${next_fg}"
-                fi
+            '%b'[0-9])
+                dfg:term:bg "${palette[${v:2}]}"
                 ;;
-
+            '%f'[0-9])
+                dfg:term:fg "${palette[${v:2}]}"
+                ;;
             '!separator'*)
                 local prefix="${v:1}"
                 local mode=${dfg_prompt_decor["${prefix}.mode"]}
@@ -227,18 +219,15 @@ dfg:prompt:print() {
                         ;;
                     *)
                         # skip next class item, we will set bg & fg
-                        (( i += 1 ))
-                        local next_v="${dfg_prompt_theme[${i}]}"
+                        # (( i += 1 ))
+
+                        local next_v="${dfg_prompt_theme[$((i + 1))]}"
                         case ${next_v} in
-                            '%'*)
-                                local next_bg="${palette[${next_v:1:1}]}"
-                                local next_fg="${palette[${next_v:2:1}]}"
-                                if [[ "${debug}" ]]; then
-                                    dfg:term:debug "[next_bg=${next_bg},next_fg=${next_fg}]"
-                                fi
+                            '%b'[0-9])
+                                next_bg="${palette[${next_v:2}]}"
                                 ;;
                             *)
-                                printf '[colors expected: %s]' "${next_v}"
+                                dfg:term:error "[background expected: '${next_v}']"
                                 ;;
                         esac
                 esac
@@ -314,7 +303,7 @@ dfg:prompt:print() {
                 printf '\n'
                 ;;
             '!'*)
-                printf "[unknown command '${v:1}']"
+                printf '[unknown command "%s"]' "${v:1}"
                 ;;
             =*)
                 printf '%s' "${v:1}"
@@ -376,7 +365,7 @@ dfg:prompt:decor:char() {
             esac
             ;;
         *)
-            printf '%s' ${1}
+            printf '%s' "${1}"
             ;;
     esac
 }
@@ -395,7 +384,7 @@ dfg:prompt:break:char() {
                 round)    printf ''  ;; # e0b7
                 flames)   printf ' ' ;; # e0c3
                 space)    printf ' '  ;; #   20
-                *)        printf '%s' ${1} ;;
+                *)        printf '%s' "${1}" ;;
             esac
             ;;
         right|'')
@@ -406,11 +395,11 @@ dfg:prompt:break:char() {
                 round)    printf ''  ;; # e0b5
                 flames)   printf ' ' ;; # e0c1
                 space)    printf ' '  ;; #   20
-                *)        printf '%s' ${1} ;;
+                *)        printf '%s' "${1}" ;;
             esac
             ;;
         *)
-            printf '%s' ${1}
+            printf '%s' "${1}"
             ;;
     esac
 }
@@ -432,7 +421,7 @@ __shorten() {
             prefix="../"
         fi
     done
-    printf "${prefix}${path}"
+    printf '%s' "${prefix}${path}"
 }
 
 _result() {
@@ -444,13 +433,13 @@ _short_pwd() {
     local pwd="$(pwd)"
     case "${pwd}" in
         "${HOME}")
-            printf "~"
+            printf '~'
             ;;
         "${HOME}"*)
-            printf "~/$(__shorten "${pwd/${HOME}\///}" $((maxlen - 2)))"
+            printf '%s' "~/$(__shorten "${pwd/${HOME}\///}" $((maxlen - 2)))"
             ;;
         *)
-            printf "/$(__shorten "${pwd:1}" $((maxlen - 1)))"
+            printf '%s' "/$(__shorten "${pwd:1}" $((maxlen - 1)))"
             ;;
     esac
 }
@@ -485,27 +474,27 @@ _branch() {
 }
 
 _time_hm() {
-    printf "$(date +'%H:%M')"
+    printf '%s' "$(date +'%H:%M')"
 }
 
 _time_hms() {
-    printf "$(date +'%H:%M:%S')"
+    printf '%s' "$(date +'%H:%M:%S')"
 }
 
 _day_of_week() {
-    printf "$(date +'%A')"
+    printf '%s' "$(date +'%A')"
 }
 
 _day_of_week_short() {
-    printf "$(date +'%a')"
+    printf '%s' "$(date +'%a')"
 }
 
 _user() {
-    printf "$(whoami)"
+    printf '%s' "$(whoami)"
 }
 
 _host() {
-    printf "$(hostname -s)"
+    printf '%s' "$(hostname -s)"
 }
 
 # ------------------------------------------------------------------------------
@@ -523,9 +512,8 @@ if [[ "${run}" == "1" ]]; then
                         if [[ "${palette}" == "" || "${palette}" == "${p}" ]]; then
                             echo "theme=${t},decor=${d},palette=${p}"
                             dfg_prompt_config_palette="builtin/${p}"
-                            echo "calling"
+                            #dfg:prompt:print
                             eval "printf '%b\\n' \"$(dfg:prompt:print)\""
-                            echo "called"
                         fi
                     done
                 fi

@@ -10,26 +10,28 @@ declare dfg_palette_celestial_voyage=(          '#1b2a6f' '#2b3e9c' '#4f74b5' '#
 declare dfg_palette_day_woods=(                 '#3c5b2a' '#50713d' '#708c4f' '#99a85d' '#c0c5a5')
 declare dfg_palette_copper_veins=(              '#7d3b2b' '#a45d2d' '#c79c5c' '#e1b06b' '#f6d9a2')
 declare dfg_palette_copper_clockwork_dreams=(   '#794d39' '#b86d4c' '#d8a44b' '#f6cc6a' '#f9e79f')
-declare dfg_palette_blue_tokyo_night=(          '#1b1f37' '#3e4f75' '#5d8db6' '#f1b350' '#f76e6e')
 declare dfg_palette_gradient_dark_blue=(        '#c58d6c' '#d3a287' '#e0b8a2' '#edcebd' '#f9e5d9')
-
 declare dfg_palette_moss=(                      '#202f29' '#334232' '#47553a' '#596542' '#6c784b')
 declare dfg_palette_darkwwod=(                  '#2d1810' '#3d261a' '#5c4033' '#8a593d' '#a67859')
 declare dfg_palette_neptune=(                   '#0a0a1f' '#191938' '#2a2a5a' '#4b4b8b' '#6a6aa9')
-declare dfg_palette_sinister_night=(            '#0a0a0f' '#1a1a2e' '#15203c' '#543483' '#b91371')
 declare dfg_palette_deep_ocean=(                '#0a2343' '#1a3b60' '#2a5a7a' '#3b7b97' '#4a98b0')
 declare dfg_palette_earth=(                     '#2d1810' '#4b2f20' '#8c5a2b' '#d4a573' '#f8e7ce')
-declare dfg_palette_stormy night=(              '#0a0f1f' '#2b3a50' '#4b5e7c' '#7b8da3' '#b8c6d6')
+declare dfg_palette_stormy_night=(              '#0a0f1f' '#2b3a50' '#4b5e7c' '#7b8da3' '#b8c6d6')
+declare dfg_palette_blue_tokyo_night=(          '#1b1f37' '#3e4f75' '#5d8db6' '#f1b350' '#f76e6e')
+declare dfg_palette_sinister_night=(            '#0a0a0f' '#1a1a2e' '#15203c' '#543483' '#b91371')
 
-dfg:color:show_palette() {
-    local name="dfg_palette_${1}"
-    local fgi=4
-    declare -n palette="${name}"
-    for (( i = 0; i < ${#palette[@]}; i++ )); do
-        dfg:term:bg "${palette[${i}]}"
-        if (( i <= 2 )); then fgi=4; else fgi=0; fi
-        dfg:term:fg "${palette[${fgi}]}"
-        printf ' %s ' "${palette[${i}]}"
-        dfg:term:reset
+dfg:color:demo() {
+    for p in $(grep "^declare dfg_palette_" "${BASH_SOURCE}" | cut -d' ' -f2 | cut -d= -f1 | cut -d_ -f3-); do
+        if [[ "${palette}" == "${p}" || "${palette}" == "" ]]; then
+            declare -n palette_arr="dfg_palette_${p}"
+            for (( i = 0; i < ${#palette_arr[@]}; i++ )); do
+                dfg:term:bg "${palette_arr[${i}]}"
+                if (( i <= 2 )); then fgi=4; else fgi=0; fi
+                dfg:term:fg "${palette_arr[${fgi}]}"
+                printf ' %s ' "${palette_arr[${i}]}"
+                dfg:term:reset
+            done
+            echo " ${p}"
+        fi
     done
 }
