@@ -23,7 +23,7 @@ dfg:term:esc() {
 
 dfg:term:bg() {
     if [[ "${debug}" == "1" ]]; then
-        dfg:term:debug "[fg=${1}]"
+        dfg:term:debug "[bg=${1}]"
     fi
     if [[ "${1}" != "" ]]; then
         dfg:term:esc 48 "${1}"
@@ -33,7 +33,7 @@ dfg:term:bg() {
 
 dfg:term:fg() {
     if [[ "${debug}" == "1" ]]; then
-        dfg:term:debug "[bg=${1}]"
+        dfg:term:debug "[fg=${1}]"
     fi
     if [[ "${1}" != "" ]]; then
         dfg:term:esc 38 "${1}"
@@ -48,7 +48,7 @@ dfg:term:bgfg() {
 
 dfg:term:negative() {
     if [[ "${debug}" == "1" ]]; then
-        dfg:term:debug "[negitive]"
+        dfg:term:debug "[negative]"
     fi
     dfg_term_mode=negative
     printf '\033[7m'

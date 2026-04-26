@@ -20,7 +20,7 @@ return {
         { path = "wezterm-types", modes = { "wezterm" } },
         { path = "lazy.nvim", words = { "lazy", "LazyVim" } },
         { path = "snacks.nvim", words = { "snacks", "Snacks" } },
-        { path = "/home/marcin/.config/nvim" },
+        { path = vim.fn.stdpath("config") },
       },
     },
   },

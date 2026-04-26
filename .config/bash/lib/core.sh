@@ -4,6 +4,8 @@
 # Core - global variables
 # ------------------------------------------------------------------------------
 
+XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-${HOME}/.config}
+
 # libs array
 declare -A dfg_libs=()
 

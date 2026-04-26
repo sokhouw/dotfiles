@@ -1,8 +1,7 @@
 
 
 -- Pull in the wezterm API
-local wezterm = require "wezterm" ---@type Wezterm
-local act = wezterm.action
+local wezterm = require("wezterm") ---@type Wezterm
 
 -- This will hold the configuration.
 local config = wezterm.config_builder() ---@type Config
@@ -22,13 +21,10 @@ config.color_scheme = "Darkside (Gogh)"
 config.color_scheme = "Digerati (terminal.sexy)"
 config.color_scheme = "Darktooth (base16)"
 config.color_scheme = "Dark+"
-config.color_scheme = "Cobalt2"
 config.color_scheme = "Brogrammer"
 config.color_scheme = "Aardvark Blue"
 config.color_scheme = "Liquid Carbon Transparent (Gogh)"
-config.window_background_opacity = 1
-
-config.window_decorations = "TITLE|RESIZE"
+config.color_scheme = "Cobalt2"
 
 config.inactive_pane_hsb = {
   saturation = 0.9,
@@ -40,7 +36,7 @@ config.mouse_bindings = {
   {
     event = { Down = { streak = 1, button = "Right" } },
     mods = "NONE",
-    action = act.PasteFrom("PrimarySelection")
+    action = wezterm.action.PasteFrom("PrimarySelection")
   },
 }
 
@@ -81,8 +77,43 @@ config.keys = {
   { mods = "ALT",    key = "9", action = wezterm.action.ActivatePaneByIndex(8) },
   { mods = "ALT",    key = "0", action = wezterm.action.ActivatePaneByIndex(9) },
 
+  -- theme selector --
+  { mods = "LEADER", key = "t", action = wezterm.action.EmitEvent("choose-theme") },
 
 }
+
+-- theme selector (version 1) -----------------------------
+
+-- wezterm.on("choose-theme", function(window, pane)
+--   -- get all built-in color schemes
+--   local schemes = wezterm.color.get_builtin_schemes()
+--   local choices = {}
+--
+--   for name, _ in pairs(schemes) do
+--     table.insert(choices, { label = name })
+--   end
+--   table.sort(choices, function(a, b) return a.label < b.label end)
+--
+--   window:perform_action(
+--     wezterm.action.InputSelector({
+--       title = "Pick a Color Scheme",
+--       choices = choices,
+--       fuzzy = true,               -- optional fuzzy search
+--       action = wezterm.action_callback(function(_, _, _, label)
+--         -- apply the chosen scheme immediately to this window
+--         window:set_config_overrides({ color_scheme = label })
+--       end),
+--     }),
+--     pane
+--   )
+-- end)
+
+-- theme selector (version 2) -----------------------------
+
+-- local default_theme = "Cobalt2"
+-- local env_theme = os.getenv("WEZ_THEME") or default_theme
+--
+
 
 -- plugins ------------------------------------------------
 
@@ -96,6 +127,8 @@ config.keys = {
 config.window_padding = { left = 0, right = 0, top = 0, bottom = 0 }
 config.hide_tab_bar_if_only_one_tab = false
 config.tab_bar_at_bottom = false
+config.window_background_opacity = 1
+config.window_decorations = "NONE"
 
 local tabline = wezterm.plugin.require("https://github.com/michaelbrusegard/tabline.wez")
 tabline.setup({
@@ -118,7 +151,7 @@ tabline.setup({
     },
   },
   sections = {
-    tabline_a = { 'mode' },
+--    tabline_a = { 'mode' },
     tabline_b = { 'workspace' },
     tabline_c = { ' ' },
     tab_active = {
