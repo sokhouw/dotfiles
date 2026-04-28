@@ -24,26 +24,14 @@ That was exactly what I needed. Dotfiles stored in git bare repo.
 
 ## Install
 
-### Full install 
+### Using curl
+
+### Manual install
 
 Copy and run script below. 
 
 ```shell
-DOTFILES_DIR="${HOME}/.local/share/dotfiles"
-REPO_DIR="${DOTFILES_DIR}/repo"
-BACKUP_DIR="${DOTFILES_DIR}/backup"
-git clone --bare -b main https://github.com/sokhouw/dotfiles/ ${REPO_DIR}
-for f in $(git --git-dir ${REPO_DIR} --work-tree=${HOME} diff --name-only --no-color --no-renames main); do 
-    if [ -f "${f}" ]; then
-        echo "Backing up ${f}"
-        [ ! -d "${BACKUP_DIR}/$(dirname ${f})" ] && mkdir -p "${BACKUP_DIR}/$(dirname ${f})" 
-        mv $HOME/$f ${BACKUP_DIR}/${f}
-    fi; 
-done
-git --git-dir ${REPO_DIR} --work-tree=${HOME} reset
-git --git-dir ${REPO_DIR} --work-tree=${HOME} checkout .
-echo ". ~/.config/bash/include" >> $HOME/.bashrc
-source ${HOME}/.bashrc
+curl -fsSL https://raw.githubusercontent.com/sokhouw/dotfiles/main/.local/bin/dfg-install | sh
 ```
 
 In case only parts of the repo are needed, it is possible to checkout only some files.
@@ -120,20 +108,15 @@ dfg push origin <BRANCH_NAME> -f
 
 ## Uninstall
 
-Copy and run script below.
+### Default
+
+bash ${HOME}/.local/bin/dfg-uninstall
+
+### Manual uninstall
+
+run this command.
 
 ```shell
-DOTFILES_DIR=${HOME}/.local/share/dotfiles
-BACKUP_DIR=${DOTFILES_DIR}/backup
-dfg ls-files | xargs rm -f
-dfg ls-tree --name-only -d -r main | sort -r | xargs -I{} rmdir {} 2>/dev/null
-for f in $(find ${BACKUP_DIR} -type f 2>/dev/null); do 
-    t=$(realpath -s --relative-to="$DOTFILES_DIR/backup" $f)
-    [ ! -d "${HOME}/$(dirname ${t})" ] && mkdir -p "${HOME}/$(dirname ${t})"
-    mv $f ${HOME}/${t}
-done
-rm -rf ${DOTFILES_DIR}
-rm ${HOME}/.gitignore
-sed -i "/^alias dfg=/d" $HOME/.bashrc
-grep "^alias" ~/.config/bash/include.d/aliases | sed "s/^alias\s\+//" | cut -f1 -d= | xargs unalias
+bash ~/.local/bin/dfg-uninstall
+```
 ```
