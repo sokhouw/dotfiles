@@ -31,7 +31,7 @@ That was exactly what I needed. Dotfiles stored in git bare repo.
 Copy and run script below. 
 
 ```shell
-curl -fsSL https://raw.githubusercontent.com/sokhouw/dotfiles/main/.local/bin/dfg-install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/sokhouw/dotfiles/main/.local/bin/dfg-install.sh | bash
 ```
 
 In case only parts of the repo are needed, it is possible to checkout only some files.
