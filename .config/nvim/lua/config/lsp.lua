@@ -1,5 +1,4 @@
--- Uncomment LSPs that are to be installed manually outside mason
--- ELP (Erlang Language Platform) is manually enabled here as it's not configured via mason-lspconfig.
--- Ensure the 'erlang_ls' binary is available in your PATH.
+-- erlang_ls and ELP (Erlang Language Platform) are manually enabled here.
+-- They are not configured via mason-lspconfig.
 vim.lsp.enable({"erlangls"})
 --vim.lsp.enable({"elp"})

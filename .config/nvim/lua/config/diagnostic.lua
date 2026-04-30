@@ -35,36 +35,6 @@ vim.diagnostic.config({
   },
 })
 
--- solution 1 (does not work)
--- vim.api.nvim_create_autocmd("User", {
---   pattern = "LazyDevDone",
---   callback = function()
---     -- refresh current buffer diagnostics
---     if vim.bo.filetype == "lua" then
---       vim.cmd("edit")
---     end
---   end,
--- })
-
--- solution 2 (does not work, ends up in some infinite loop)
--- vim.api.nvim_create_autocmd("LspAttach", {
---   callback = function(args)
---     vim.notify(Toolkit.tostring(args))
---     local client = vim.lsp.get_client_by_id(args.data.client_id)
---     if client and client.name == "lua_ls" then
---       vim.defer_fn(function()
---         if vim.bo[args.buf].filetype == "lua" then
---           vim.api.nvim_buf_call(args.buf, function()
---             vim.cmd("edit")
---           end)
---         end
---       end, 200)
---     end
---   end,
--- })
-
--- solution 3
-
 local orig_progress = vim.lsp.handlers["$/progress"]
 local pending = {}
 
@@ -97,8 +67,4 @@ vim.lsp.handlers["$/progress"] = function(err, result, ctx, config)
   if orig_progress then
     orig_progress(err, result, ctx, config)
   end
-end
-
-_G.oko = function()
-  return pending
 end

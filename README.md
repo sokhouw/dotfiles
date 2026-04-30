@@ -31,7 +31,7 @@ That was exactly what I needed. Dotfiles stored in git bare repo.
 Copy and run script below. 
 
 ```shell
-curl -fsSL https://raw.githubusercontent.com/sokhouw/dotfiles/main/.local/bin/dfg-install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sokhouw/dotfiles/main/.local/share/dotfiles/bin/dfg-install.sh | bash
 ```
 
 In case only parts of the repo are needed, it is possible to checkout only some files.
@@ -108,15 +108,9 @@ dfg push origin <BRANCH_NAME> -f
 
 ## Uninstall
 
-### Default
-
-bash ${HOME}/.local/bin/dfg-uninstall
-
-### Manual uninstall
-
-run this command.
+run this command:
 
 ```shell
-bash ~/.local/bin/dfg-uninstall.sh
+bash ${HOME}/.local/share/dotfiles/bin/dfg-uninstall
 ```
-```
+
