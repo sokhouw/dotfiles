@@ -43,7 +43,7 @@ local function refresh_buffers(client, ft)
     if attached and vim.api.nvim_buf_is_valid(bufnr) then
       if vim.bo[bufnr].filetype == ft then
         vim.schedule(function()
-          vim.api.nvim_buf_call(bufnr, function()
+          pcall(vim.api.nvim_buf_call, bufnr, function()
             vim.cmd("edit")
             vim.diagnostic.show()
           end)

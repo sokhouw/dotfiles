@@ -15,6 +15,7 @@ if empty(glob('~/.config/vim/autoload/plug.vim'))
 endif
 
 " --- Plugins ---------------------------------------------------
+
 call plug#begin('~/.local/share/vim/plugged')
 
 " colorschemes
@@ -38,15 +39,14 @@ Plug 'cocopon/iceberg.vim'
 
 call plug#end()
 
-" --- Colorscheme -----------------------------------------------
-silent! colorscheme iceberg
-
 " --- File handling ---------------------------------------------
+
 set nocompatible
 filetype plugin indent on
 syntax on
 
 " --- UI tweaks -------------------------------------------------
+
 set nowrap
 set number
 set relativenumber
@@ -62,19 +62,26 @@ set laststatus=2
 set background=dark
 
 " --- Tabs vs spaces --------------------------------------------
+
 set softtabstop=4
 set shiftwidth=4
 set expandtab
 
 " --- Encoding --------------------------------------------------
+
 set encoding=utf-8
 set fileencodings=utf-8
 
-" --- Diff ------------------------------------------------------
+" --- Colorscheme -----------------------------------------------
+
+silent! colorscheme iceberg
 
 if &diff
-silent! colorscheme nord
-else
-set norelativenumber
-set scrolloff=0
+    highlight DiffAdd guibg=#206020
+    highlight DiffDelete guibg=#602020
+    highlight DiffChange guibg=#202080
+    highlight DiffText guibg=#0000ff
+    set nocursorline
+    set fillchars=diff:\ 
 endif
+

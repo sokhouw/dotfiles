@@ -1,20 +1,31 @@
 [user]
-    email = marcin.sokolowski@gmail.com
     name = sokhouw
-[core]
-    editor = nvim
-    pager = cat
-; [diff]
-;     tool = vimdiff
+    email = marcin.sokolowski@gmail.com
+[push]
+    default = current
 [diff]
-    tool = nvimdiff
-[difftool "nvimdiff"]
+    tool = vimdiff
+    patience = true
+[difftool "vimdiff"]
+    path = vimdiff
+    cmd = vimdiff -u ~/.config/vim/vimrc "$LOCAL" "$REMOTE"
     prompt = false
-    cmd = nvim -d "$LOCAL" "$REMOTE"
 [merge]
-    tool = "nvim -d"
+    tool = vimdiff
+    patience = true
+[mergetool "vimdiff"]
+    path = vimdiff
+    cmd = vimdiff -u ~/.config/vim/vimrc -f -d -c '4wincmd w | wincmd J' "$LOCAL" "$BASE" "$REMOTE" "$MERGED"
 [mergetool]
     prompt = false
+[apply]
+    whitespace = nowarn
+[init]
+    templatedir = ~/.git-templates
+; [core]
+;     excludesFile = ~/.gitignore
+[color]
+    ui = auto
 [format]
     pretty = format:%C(bold yellow)%h%C(reset) %C(green)%cr%C(reset)%x09 %C(blue)%an%C(reset) %s%C(auto)%d%C(reset)
 [pager]
