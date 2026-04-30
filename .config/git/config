@@ -1,6 +1,5 @@
-[user]
-    name = sokhouw
-    email = marcin.sokolowski@gmail.com
+[include]
+    path = ~/.config/git/config.local
 [push]
     default = current
 [diff]

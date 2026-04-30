@@ -1,4 +1,4 @@
-alias dfg='git --git-dir ${HOME}/.local/share/dotfiles/repo --work-tree=${HOME}'
+alias dfg='git -c status.showUntrackedFiles=no -c user.name="sokhouw" -c user.email="marcin.sokolowski@gmail.com" --git-dir ${HOME}/.local/share/dotfiles/repo --work-tree=${HOME}'
 alias vim='vim -u ${XDG_CONFIG_HOME:-$HOME/.config}/vim/vimrc'
 alias vimdiff='vimdiff -u ${XDG_CONFIG_HOME:-$HOME/.config}/vim/vimrc'
 alias lazy='NVIM_APPNAME=nvim-lazy nvim'
