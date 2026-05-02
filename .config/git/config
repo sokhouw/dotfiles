@@ -23,5 +23,5 @@
     ui = auto
 [format]
     pretty = format:%C(bold yellow)%h%C(reset) %C(green)%cr%C(reset)%x09 %C(blue)%an%C(reset) %s%C(auto)%d%C(reset)
-[pager]
-    log = cat && echo
+[core]
+    pager = cat && echo
