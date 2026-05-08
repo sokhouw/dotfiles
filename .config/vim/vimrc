@@ -60,6 +60,7 @@ set showmode
 set hidden
 set laststatus=2
 set background=dark
+set backspace=indent,eol,start
 
 " --- Tabs vs spaces --------------------------------------------
 
