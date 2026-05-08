@@ -1,10 +1,16 @@
-return {                                                                                                                                                                                   
+return {
   { "catppuccin/nvim", name = "catppuccin" },
   { "folke/tokyonight.nvim" },
   { "EdenEast/nightfox.nvim" },
-  --{ "killitar/obscure.nvim" },
   { "vague2k/vague.nvim" },
   { "joshdick/onedark.vim" },
   { "flazz/vim-colorschemes" },
   { "zenbones-theme/zenbones.nvim" },
+  { "jpwol/thorn.nvim" },
+  { "morhetz/gruvbox" },
+  { "sainnhe/everforest" },
+  { "sainnhe/sonokai" },
+  { "rebelot/kanagawa.nvim" },
+  { "rose-pine/neovim" },
+  { "Mofiqul/vscode.nvim" },
 }
