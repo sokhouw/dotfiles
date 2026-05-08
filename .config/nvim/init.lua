@@ -7,5 +7,3 @@ require("config/options")
 require("config/lsp")
 require("config/lazy")
 require("config/diffcolors")
-
-vim.cmd("colorscheme catppuccin-mocha")
