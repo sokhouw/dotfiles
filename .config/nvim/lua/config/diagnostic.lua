@@ -7,7 +7,6 @@ vim.diagnostic.config({
     -- How far away from EOL diagnostic gets displayed
     spacing = 10,
   },
-
   float = {
     focusable = true,
     style = "minimal",
@@ -35,36 +34,27 @@ vim.diagnostic.config({
   },
 })
 
-local orig_progress = vim.lsp.handlers["$/progress"]
-local pending = {}
+-- This autocmd here tackles the issue with lua-language-server when diagnostics are not showing up on initial load of the file.
+vim.api.nvim_create_autocmd("LspProgress", {
+  callback = function(ev)
+    local client = vim.lsp.get_client_by_id(ev.data.client_id)
+    local value = ev.data.params.value
 
-local function refresh_buffers(client, ft)
-  for bufnr, attached in pairs(client.attached_buffers or {}) do
-    if attached and vim.api.nvim_buf_is_valid(bufnr) then
-      if vim.bo[bufnr].filetype == ft then
-        vim.schedule(function()
-          pcall(vim.api.nvim_buf_call, bufnr, function()
-            vim.cmd("edit")
-            vim.diagnostic.show()
-          end)
-        end)
+    if client and client.name == "lua_ls" and value.kind == "end" and value.title == "Loading workspace" then
+      for bufnr, _ in ipairs(vim.lsp.get_client_by_id(client.id).attached_buffers) do
+      -- for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(client.id)) do
+        if vim.api.nvim_buf_is_valid(bufnr) and vim.bo[bufnr].filetype == "lua" then
+          -- Do not mess with Diffview is running :edit breaks diffs
+          local is_diff = vim.wo[0].diff or vim.bo[bufnr].filetype:match("Diffview") or vim.api.nvim_buf_get_name(bufnr):match("^diffview://")
+          if not is_diff then
+            vim.schedule(function()
+              vim.api.nvim_buf_call(bufnr, function()
+                vim.cmd("edit")
+              end)
+            end)
+          end
+        end
       end
     end
-  end
-end
-
-vim.lsp.handlers["$/progress"] = function(err, result, ctx, config)
-  local client = vim.lsp.get_client_by_id(ctx.client_id)
-  if client and client.name == "lua_ls" then
-    local v = result.value
-    if v.kind == "begin" and v.title == "Loading workspace" then
-      pending[result.token] = true
-    elseif v.kind == "end" and pending[result.token] then
-      pending[result.token] = nil
-      refresh_buffers(client, "lua")
-    end
-  end
-  if orig_progress then
-    orig_progress(err, result, ctx, config)
-  end
-end
+  end,
+})
