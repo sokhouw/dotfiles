@@ -114,12 +114,6 @@ return {
       enabled = true,
     },
     image = { enabled = false },
-    enabled = {
-      image = false,
-    },
-    preview = {
-      image = false,
-    },
   },
   keys = {
     -- Top Pickers & Explorer
@@ -248,5 +242,14 @@ return {
         Snacks.toggle.dim():map("<leader>uD")
       end,
     })
+  end,
+  -- automatically hides health checks for any module where enabled = false
+  config = function(_, opts)
+    require("snacks").setup(opts)
+    for _, snack in ipairs(require("snacks").meta.get()) do
+      if not require("snacks").config[snack.name].enabled then
+        snack.meta.health = false
+      end
+    end
   end,
 }
