@@ -82,7 +82,6 @@ return {
       enabled = true,
       layout = {
         preset = "ivy", -- "default"|"ivy"|"telescope" 
-        preview = false,
       },
       win = {
         input = {
@@ -123,8 +122,6 @@ return {
     },
   },
   keys = {
-    -- Dashboard
-    { "<leader>D", Dashboard.open, desc = "Dashboard" },
     -- Top Pickers & Explorer
     { "<leader><space>", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
     { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },

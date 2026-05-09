@@ -1,3 +1,8 @@
+; This is global and common git config shared by git and dfg (git alias)
+; Files that actually contain user information are:
+; - ${XDG_CONFIG_DIR}/git/git.config - when git is used
+; - ${XDG_CONFIG_DIR}/git/dfg.config - when dfg is used
+; Since I am the only user of that repo dfg.config is indexed.
 [push]
     default = current
 [diff]

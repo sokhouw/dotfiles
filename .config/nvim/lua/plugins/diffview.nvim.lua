@@ -1,9 +1,7 @@
 local git_cmd = function()
-  if os.execute("git rev-parse --is-inside-work-tree") == 0 then
-    -- Toolkit.log.info("using git", "dfg")
+  if os.execute("git rev-parse --is-inside-work-tree 2>/dev/null") == 0 then
     return { "git" }
   else
-    -- Toolkit.log.info("using dfg", "dfg")
     return { "git",
              "-c", "include.path=" .. vim.env.HOME .. "/.config/git/dfg.config",
              "--git-dir", vim.env.HOME .. "/.local/share/dotfiles/repo",
@@ -11,14 +9,23 @@ local git_cmd = function()
   end
 end
 
+local dv_keymap = {
+  { "n", "<leader>dv", ":DiffviewClose<CR>", { desc = "Close Diff View" } },
+}
+
 return {
   "sindrets/diffview.nvim",
   opts = {
     git_cmd = git_cmd(),
     view = {
-      default = {
+      defaaadult = {
         disable_diagnostics = true,
       },
+    },
+    keymaps = {
+      view               = dv_keymap,
+      file_panel         = dv_keymap,
+      file_history_panel = dv_keymap,
     },
   },
 }
