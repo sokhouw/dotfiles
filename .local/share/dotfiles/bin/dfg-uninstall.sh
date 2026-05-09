@@ -9,5 +9,4 @@ for f in $(find ${BACKUP_DIR} -type f 2>/dev/null); do
 done
 rm -rf ${DOTFILES_DIR}
 rm ${HOME}/.gitignore
-sed -i "/^alias dfg=/d" $HOME/.bashrc
-grep "^alias" ~/.config/bash/include.d/aliases | sed "s/^alias\s\+//" | cut -f1 -d= | xargs unalias
+# grep "^alias" ~/.config/bash/include.d/aliases | sed "s/^alias\s\+//" | cut -f1 -d= | xargs unalias

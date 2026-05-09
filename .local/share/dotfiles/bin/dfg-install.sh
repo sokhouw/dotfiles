@@ -11,5 +11,5 @@ for f in $(git --git-dir ${REPO_DIR} --work-tree=${HOME} diff --name-only --no-c
 done
 git --git-dir ${REPO_DIR} --work-tree=${HOME} reset
 git --git-dir ${REPO_DIR} --work-tree=${HOME} checkout .
-echo ". ~/.config/bash/main.sh" >> $HOME/.bashrc
+echo ". ~/.config/bash/bashrc.include" >> $HOME/.bashrc
 source ${HOME}/.bashrc
