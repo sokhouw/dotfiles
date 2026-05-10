@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Ensure XDG vars do exist
+export XDG_DATA_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}"
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
+
+# Include config if it does exist 
+if [ -f "${XDG_CONFIG_HOME}/bash/config" ]; then
+    source "${XDG_CONFIG_HOME}/bash/config"
+fi
+
+source "${XDG_CONFIG_HOME}/bash/include/aliases"
+source "${XDG_CONFIG_HOME}/bash/include/mancolors"
